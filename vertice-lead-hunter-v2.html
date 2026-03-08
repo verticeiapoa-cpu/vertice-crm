@@ -1,0 +1,792 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>▲ VÉRTICE — Lead Hunter</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a08;
+    --surface: #111109;
+    --surface2: #1a1a14;
+    --gold: #c9a84c;
+    --gold-dim: #7a6530;
+    --red: #c0392b;
+    --green: #25d366;
+    --text: #e8e0d0;
+    --text-dim: #7a7060;
+    --border: #2a2820;
+    --border-gold: rgba(201,168,76,0.3);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none;
+    z-index: 1000;
+    opacity: 0.4;
+  }
+  header {
+    border-bottom: 1px solid var(--border-gold);
+    padding: 16px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(10,10,8,0.97);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    backdrop-filter: blur(12px);
+  }
+  .logo { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 300; letter-spacing: 0.15em; }
+  .logo-triangle { color: var(--red); }
+  .logo-sub { font-size: 9px; color: var(--gold); letter-spacing: 0.3em; margin-top: 2px; }
+  .free-badge {
+    background: rgba(37,211,102,0.1);
+    border: 1px solid rgba(37,211,102,0.35);
+    border-radius: 20px;
+    color: var(--green);
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    padding: 5px 12px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(0.8)} }
+
+  .layout { display: grid; grid-template-columns: 300px 1fr; min-height: calc(100vh - 57px); }
+
+  aside {
+    border-right: 1px solid var(--border);
+    padding: 22px 18px;
+    background: var(--surface);
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: auto;
+  }
+
+  .sec-label {
+    font-size: 9px;
+    letter-spacing: 0.4em;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .sec-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  label { font-size: 9px; color: var(--text-dim); letter-spacing: 0.15em; text-transform: uppercase; }
+
+  input, select {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    font-family: 'Space Mono', monospace;
+    font-size: 11px;
+    padding: 9px 11px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input:focus, select:focus { border-color: var(--gold-dim); }
+  select option { background: #1a1a14; }
+
+  .range-row { display: flex; justify-content: space-between; align-items: center; }
+  .range-val { font-size: 12px; color: var(--gold); font-weight: 700; }
+  input[type=range] { -webkit-appearance: none; background: var(--border); height: 3px; border-radius: 2px; padding: 0; border: none; }
+  input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 13px; height: 13px; border-radius: 50%; background: var(--gold); cursor: pointer; }
+
+  .rules-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; padding: 12px; display: flex; flex-direction: column; gap: 9px; }
+  .rule-row { display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+  .rule-row span { font-size: 10px; color: var(--text); }
+  .toggle { position: relative; width: 34px; height: 18px; flex-shrink: 0; }
+  .toggle input { display: none; }
+  .track { position: absolute; inset: 0; background: var(--border); border-radius: 9px; transition: background 0.2s; cursor: pointer; }
+  .track::after { content: ''; position: absolute; width: 12px; height: 12px; border-radius: 50%; background: var(--text-dim); top: 3px; left: 3px; transition: transform 0.2s, background 0.2s; }
+  .toggle input:checked + .track { background: var(--gold-dim); }
+  .toggle input:checked + .track::after { transform: translateX(16px); background: var(--gold); }
+  .rule-hint { font-size: 9px; color: var(--text-dim); line-height: 1.5; padding-left: 4px; border-left: 2px solid var(--border-gold); }
+  .rule-sep { height: 1px; background: var(--border); }
+
+  .btn-main {
+    background: linear-gradient(135deg, #c9a84c, #8a6520);
+    border: none; border-radius: 4px;
+    color: #0a0a08;
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    font-size: 11px; font-weight: 700;
+    letter-spacing: 0.2em;
+    padding: 13px;
+    text-transform: uppercase;
+    width: 100%;
+    transition: opacity 0.2s, transform 0.1s;
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+  }
+  .btn-main:hover { opacity: 0.85; }
+  .btn-main:active { transform: scale(0.98); }
+  .btn-main:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  .btn-out {
+    background: transparent;
+    border: 1px solid var(--border-gold);
+    border-radius: 4px;
+    color: var(--gold);
+    cursor: pointer;
+    font-family: 'Space Mono', monospace;
+    font-size: 9px; letter-spacing: 0.18em;
+    padding: 9px; text-transform: uppercase;
+    width: 100%; transition: all 0.2s; margin-top: 3px;
+  }
+  .btn-out:hover { background: rgba(201,168,76,0.07); }
+  .btn-green { border-color: rgba(37,211,102,0.35); color: var(--green); }
+  .btn-green:hover { background: rgba(37,211,102,0.07); }
+
+  main { display: flex; flex-direction: column; }
+
+  .topbar {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .stats { display: flex; gap: 24px; }
+  .stat { display: flex; flex-direction: column; align-items: center; }
+  .stat-n { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 300; color: var(--gold); line-height: 1; }
+  .stat-l { font-size: 9px; color: var(--text-dim); letter-spacing: 0.18em; text-transform: uppercase; margin-top: 2px; }
+  .stat-div { width: 1px; height: 32px; background: var(--border); align-self: center; }
+  .act-row { display: flex; gap: 8px; }
+  .btn-sm {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 4px;
+    color: var(--text-dim); cursor: pointer; font-family: 'Space Mono', monospace;
+    font-size: 9px; letter-spacing: 0.13em; padding: 7px 12px; text-transform: uppercase;
+    transition: all 0.2s; display: flex; align-items: center; gap: 5px;
+  }
+  .btn-sm:hover { border-color: var(--gold-dim); color: var(--gold); }
+
+  .tbl-wrap { flex: 1; overflow-y: auto; }
+  .tbl-head {
+    display: grid;
+    grid-template-columns: 2fr 1.4fr 0.9fr 1fr 0.7fr 0.8fr;
+    padding: 9px 24px;
+    border-bottom: 1px solid var(--border);
+    background: var(--surface);
+    position: sticky; top: 0; z-index: 10;
+  }
+  .th { font-size: 8px; letter-spacing: 0.25em; color: var(--gold-dim); text-transform: uppercase; }
+
+  .lead-row {
+    display: grid;
+    grid-template-columns: 2fr 1.4fr 0.9fr 1fr 0.7fr 0.8fr;
+    padding: 13px 24px;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+    transition: background 0.15s;
+    animation: fadeIn 0.3s ease;
+  }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:translateY(0); } }
+  .lead-row:hover { background: var(--surface2); }
+
+  .l-name { font-family: 'Cormorant Garamond', serif; font-size: 15px; font-weight: 400; line-height: 1.2; }
+  .l-type { font-size: 9px; color: var(--text-dim); margin-top: 2px; letter-spacing: 0.05em; }
+  .l-addr { font-size: 9px; color: var(--text-dim); line-height: 1.45; }
+  .l-phone { font-size: 9px; color: var(--text-dim); margin-top: 2px; }
+
+  .score-wrap { display: flex; align-items: center; gap: 7px; }
+  .score-track { flex: 1; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
+  .score-fill { height: 100%; border-radius: 2px; transition: width 0.7s ease; }
+  .score-num { font-size: 11px; font-weight: 700; min-width: 26px; text-align: right; }
+  .sh .score-fill { background: var(--red); } .sh .score-num { color: var(--red); }
+  .sm .score-fill { background: var(--gold); } .sm .score-num { color: var(--gold); }
+  .sl .score-fill { background: var(--text-dim); } .sl .score-num { color: var(--text-dim); }
+
+  .tags { display: flex; flex-direction: column; gap: 3px; }
+  .tag {
+    display: inline-flex; align-items: center; gap: 3px;
+    font-size: 8px; letter-spacing: 0.1em; text-transform: uppercase;
+    padding: 2px 7px; border-radius: 3px; font-weight: 700;
+  }
+  .t-red { background: rgba(192,57,43,0.15); border: 1px solid rgba(192,57,43,0.4); color: #e05a4a; }
+  .t-gold { background: rgba(201,168,76,0.1); border: 1px solid var(--border-gold); color: var(--gold); }
+
+  .phone-link { color: var(--text-dim); text-decoration: none; font-size: 9px; }
+  .phone-link:hover { color: var(--green); }
+
+  .btn-crm {
+    background: transparent; border: 1px solid rgba(37,211,102,0.3); border-radius: 3px;
+    color: var(--green); cursor: pointer; font-family: 'Space Mono', monospace;
+    font-size: 8px; letter-spacing: 0.13em; padding: 5px 9px; text-transform: uppercase;
+    transition: all 0.2s; white-space: nowrap;
+  }
+  .btn-crm:hover { background: rgba(37,211,102,0.1); border-color: var(--green); }
+  .btn-crm.sent { border-color: var(--border); color: var(--text-dim); cursor: default; }
+
+  .empty {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; height: 380px; gap: 14px;
+  }
+  .empty-tri { font-size: 44px; opacity: 0.12; animation: float 3s ease-in-out infinite; }
+  @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+  .empty-t { font-family: 'Cormorant Garamond', serif; font-size: 20px; font-weight: 300; color: var(--text-dim); letter-spacing: 0.1em; }
+  .empty-s { font-size: 9px; letter-spacing: 0.2em; color: var(--text-dim); opacity: 0.55; text-transform: uppercase; }
+
+  /* PROGRESS */
+  .progress-ov {
+    display: none; position: fixed; inset: 0;
+    background: rgba(10,10,8,0.88); z-index: 500;
+    align-items: center; justify-content: center; flex-direction: column; gap: 18px;
+    backdrop-filter: blur(5px);
+  }
+  .progress-ov.on { display: flex; }
+  .prog-title { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 300; letter-spacing: 0.1em; }
+  .prog-sub { font-size: 9px; letter-spacing: 0.3em; color: var(--gold); text-transform: uppercase; }
+  .prog-bar { width: 300px; height: 2px; background: var(--border); border-radius: 1px; overflow: hidden; }
+  .prog-fill { height: 100%; background: linear-gradient(90deg, var(--gold-dim), var(--gold)); border-radius: 1px; transition: width 0.4s ease; }
+  .prog-detail { font-size: 9px; color: var(--text-dim); letter-spacing: 0.13em; height: 14px; }
+
+  /* NOTIF */
+  .notif {
+    position: fixed; bottom: 20px; right: 20px;
+    background: var(--surface); border: 1px solid var(--border-gold);
+    border-radius: 6px; padding: 12px 16px;
+    font-size: 10px; color: var(--text); z-index: 700;
+    transform: translateY(70px); opacity: 0; transition: all 0.3s ease; max-width: 300px;
+  }
+  .notif.on { transform: translateY(0); opacity: 1; }
+  .notif-t { font-weight: 700; color: var(--gold); margin-bottom: 3px; font-size: 9px; letter-spacing: 0.2em; text-transform: uppercase; }
+
+  ::-webkit-scrollbar { width: 3px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  /* Mobile */
+  @media (max-width: 768px) {
+    .layout { grid-template-columns: 1fr; }
+    aside { border-right: none; border-bottom: 1px solid var(--border); }
+    .tbl-head, .lead-row { grid-template-columns: 1fr 1fr; gap: 6px; }
+    .th:nth-child(n+3), .lead-row > *:nth-child(n+3) { display: none; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo"><span class="logo-triangle">▲ </span>VÉRTICE</div>
+    <div class="logo-sub">LEAD HUNTER · OSM FREE ENGINE</div>
+  </div>
+  <div class="free-badge">
+    <div class="dot"></div>
+    GRATUITO · SEM CADASTRO
+  </div>
+</header>
+
+<div class="layout">
+
+  <!-- SIDEBAR -->
+  <aside>
+
+    <div>
+      <div class="sec-label">Localização</div>
+      <div style="display:flex;flex-direction:column;gap:10px;">
+        <div class="field">
+          <label>Cidade</label>
+          <input id="city" value="Porto Alegre" placeholder="Ex: Porto Alegre">
+        </div>
+        <div class="field">
+          <label>Bairro (opcional)</label>
+          <input id="neighborhood" placeholder="Ex: Moinhos de Vento">
+        </div>
+        <div class="field">
+          <label>Raio de busca</label>
+          <input type="range" id="radius" min="500" max="10000" step="500" value="3000"
+            oninput="document.getElementById('rv').textContent=(this.value/1000).toFixed(1)+'km'">
+          <div class="range-row">
+            <span style="font-size:9px;color:var(--text-dim)">500m</span>
+            <span class="range-val" id="rv">3.0km</span>
+            <span style="font-size:9px;color:var(--text-dim)">10km</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div>
+      <div class="sec-label">Segmento</div>
+      <div class="field">
+        <label>Tipo de negócio</label>
+        <select id="category">
+          <option value="restaurant">Restaurantes & Bares</option>
+          <option value="hairdresser">Salões de Beleza</option>
+          <option value="gym">Academias</option>
+          <option value="dentist">Clínicas Odontológicas</option>
+          <option value="lawyer">Escritórios de Advocacia</option>
+          <option value="real_estate_agent">Imobiliárias</option>
+          <option value="car_repair">Oficinas Mecânicas</option>
+          <option value="clothes">Lojas de Roupas</option>
+          <option value="accountant">Contabilidades</option>
+          <option value="physiotherapist">Fisioterapia</option>
+          <option value="veterinary">Pet Shops & Veterinários</option>
+          <option value="florist">Floriculturas</option>
+          <option value="bakery">Padarias</option>
+          <option value="hardware">Material de Construção</option>
+          <option value="pharmacy">Farmácias</option>
+          <option value="supermarket">Mercados</option>
+        </select>
+      </div>
+    </div>
+
+    <div>
+      <div class="sec-label">Regras de Qualificação</div>
+      <div class="rules-box">
+
+        <div class="rule-row">
+          <span>Sem website cadastrado</span>
+          <label class="toggle"><input type="checkbox" id="r-website" checked><div class="track"></div></label>
+        </div>
+        <div class="rule-hint">Empresa sem site = invisível no Google. Prioridade máxima. +40pts</div>
+
+        <div class="rule-sep"></div>
+
+        <div class="rule-row">
+          <span>Sem telefone cadastrado</span>
+          <label class="toggle"><input type="checkbox" id="r-phone" checked><div class="track"></div></label>
+        </div>
+        <div class="rule-hint">Perfil incompleto indica baixo cuidado com presença digital. +20pts</div>
+
+        <div class="rule-sep"></div>
+
+        <div class="rule-row">
+          <span>Sem horário de funcionamento</span>
+          <label class="toggle"><input type="checkbox" id="r-hours" checked><div class="track"></div></label>
+        </div>
+        <div class="rule-hint">Negócios sem horário perdem clientes no Maps. +15pts</div>
+
+        <div class="rule-sep"></div>
+
+        <div class="rule-row">
+          <span>Nome genérico / sem marca</span>
+          <label class="toggle"><input type="checkbox" id="r-brand"><div class="track"></div></label>
+        </div>
+        <div class="rule-hint">Pode indicar negócio informal. Alta oportunidade. +10pts</div>
+
+      </div>
+    </div>
+
+    <div>
+      <div class="sec-label">Score mínimo</div>
+      <div class="field">
+        <input type="range" id="min-score" min="10" max="80" step="5" value="30"
+          oninput="document.getElementById('sv').textContent=this.value">
+        <div class="range-row">
+          <span style="font-size:9px;color:var(--text-dim)">10 (amplo)</span>
+          <span class="range-val" id="sv">30</span>
+          <span style="font-size:9px;color:var(--text-dim)">80 (preciso)</span>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn-main" id="hunt-btn" onclick="startHunt()">▲ CAÇAR LEADS</button>
+    <button class="btn-out" onclick="exportCSV()">↓ EXPORTAR CSV</button>
+    <button class="btn-out btn-green" onclick="sendAllCRM()">⟶ ENVIAR TUDO AO CRM</button>
+
+  </aside>
+
+  <!-- MAIN -->
+  <main>
+    <div class="topbar">
+      <div class="stats">
+        <div class="stat"><div class="stat-n" id="s-total">0</div><div class="stat-l">Leads</div></div>
+        <div class="stat-div"></div>
+        <div class="stat"><div class="stat-n" id="s-nosite">0</div><div class="stat-l">Sem Site</div></div>
+        <div class="stat-div"></div>
+        <div class="stat"><div class="stat-n" id="s-nophone">0</div><div class="stat-l">Sem Tel.</div></div>
+        <div class="stat-div"></div>
+        <div class="stat"><div class="stat-n" id="s-hot">0</div><div class="stat-l">Score Alto</div></div>
+      </div>
+      <div class="act-row">
+        <button class="btn-sm" onclick="sortBy('score')">↕ SCORE</button>
+        <button class="btn-sm" onclick="sortBy('name')">A–Z</button>
+        <button class="btn-sm" onclick="clearAll()">✕ LIMPAR</button>
+      </div>
+    </div>
+
+    <div class="tbl-wrap">
+      <div class="tbl-head">
+        <div class="th">Empresa</div>
+        <div class="th">Endereço</div>
+        <div class="th">Score</div>
+        <div class="th">Qualificação</div>
+        <div class="th">Telefone</div>
+        <div class="th">Ação</div>
+      </div>
+      <div id="leads-list">
+        <div class="empty">
+          <div class="empty-tri">▲</div>
+          <div class="empty-t">Nenhum lead ainda</div>
+          <div class="empty-s">Configure e clique em Caçar Leads</div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- PROGRESS -->
+<div class="progress-ov" id="prog-ov">
+  <div class="prog-title">Caçando leads...</div>
+  <div class="prog-sub" id="prog-sub">Conectando ao OpenStreetMap</div>
+  <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+  <div class="prog-detail" id="prog-detail"></div>
+</div>
+
+<!-- NOTIF -->
+<div class="notif" id="notif">
+  <div class="notif-t" id="notif-t">OK</div>
+  <div id="notif-m"></div>
+</div>
+
+<script>
+let leads = [];
+let sortDir = {};
+
+// ── OSM CATEGORY MAP ──────────────────────────────────────
+const OSM_MAP = {
+  restaurant:         { amenity: 'restaurant' },
+  hairdresser:        { shop: 'hairdresser' },
+  gym:                { leisure: 'fitness_centre' },
+  dentist:            { amenity: 'dentist' },
+  lawyer:             { amenity: 'lawyers' },
+  real_estate_agent:  { shop: 'estate_agent' },
+  car_repair:         { shop: 'car_repair' },
+  clothes:            { shop: 'clothes' },
+  accountant:         { office: 'accountant' },
+  physiotherapist:    { amenity: 'physiotherapist' },
+  veterinary:         { amenity: 'veterinary' },
+  florist:            { shop: 'florist' },
+  bakery:             { shop: 'bakery' },
+  hardware:           { shop: 'hardware' },
+  pharmacy:           { amenity: 'pharmacy' },
+  supermarket:        { shop: 'supermarket' },
+};
+
+// ── GEOCODE via Nominatim (OSM, gratuito) ─────────────────
+async function geocode(query) {
+  const url = `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=1`;
+  const res = await fetch(url, { headers: { 'Accept-Language': 'pt-BR' } });
+  const data = await res.json();
+  if (!data.length) throw new Error('Cidade não encontrada: ' + query);
+  return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+}
+
+// ── BUILD OVERPASS QUERY ──────────────────────────────────
+function buildOverpassQuery(lat, lng, radius, category) {
+  const tagObj = OSM_MAP[category] || { amenity: category };
+  const [key, val] = Object.entries(tagObj)[0];
+
+  return `
+[out:json][timeout:30];
+(
+  node["${key}"="${val}"](around:${radius},${lat},${lng});
+  way["${key}"="${val}"](around:${radius},${lat},${lng});
+);
+out center tags;`.trim();
+}
+
+// ── SCORE ─────────────────────────────────────────────────
+function calcScore(tags) {
+  let score = 0;
+  const rWebsite = document.getElementById('r-website').checked;
+  const rPhone   = document.getElementById('r-phone').checked;
+  const rHours   = document.getElementById('r-hours').checked;
+  const rBrand   = document.getElementById('r-brand').checked;
+
+  const hasWebsite = !!(tags.website || tags['contact:website'] || tags.url);
+  const hasPhone   = !!(tags.phone || tags['contact:phone'] || tags['contact:mobile']);
+  const hasHours   = !!tags.opening_hours;
+  const name       = tags.name || '';
+
+  if (rWebsite && !hasWebsite) score += 40;
+  if (rPhone   && !hasPhone)   score += 20;
+  if (rHours   && !hasHours)   score += 15;
+  if (rBrand   && name.length < 8) score += 10;
+
+  // Bonus: tem nome mas sem nada mais
+  if (name && !hasWebsite && !hasPhone) score += 10;
+
+  return Math.min(100, score);
+}
+
+function scoreClass(s) { return s >= 65 ? 'sh' : s >= 40 ? 'sm' : 'sl'; }
+
+function getTags(item) {
+  const tags = [];
+  const t = item.tags || {};
+  const hasWebsite = !!(t.website || t['contact:website'] || t.url);
+  const hasPhone   = !!(t.phone || t['contact:phone'] || t['contact:mobile']);
+  const hasHours   = !!t.opening_hours;
+  if (!hasWebsite) tags.push({ cls: 't-red', txt: '✕ SEM SITE' });
+  if (!hasPhone)   tags.push({ cls: 't-gold', txt: '✕ SEM TEL' });
+  if (!hasHours)   tags.push({ cls: 't-gold', txt: '✕ SEM HORÁRIO' });
+  return tags;
+}
+
+function getPhone(tags) {
+  return tags.phone || tags['contact:phone'] || tags['contact:mobile'] || null;
+}
+
+function getWebsite(tags) {
+  return tags.website || tags['contact:website'] || tags.url || null;
+}
+
+function getAddress(tags) {
+  const parts = [];
+  if (tags['addr:street'])      parts.push(tags['addr:street']);
+  if (tags['addr:housenumber']) parts.push(tags['addr:housenumber']);
+  if (tags['addr:suburb'] || tags['addr:neighbourhood']) parts.push(tags['addr:suburb'] || tags['addr:neighbourhood']);
+  if (tags['addr:city'])        parts.push(tags['addr:city']);
+  return parts.join(', ') || '—';
+}
+
+// ── HUNT ──────────────────────────────────────────────────
+async function startHunt() {
+  const city = document.getElementById('city').value.trim();
+  const hood = document.getElementById('neighborhood').value.trim();
+  const radius = document.getElementById('radius').value;
+  const category = document.getElementById('category').value;
+  const minScore = parseInt(document.getElementById('min-score').value);
+  const searchQuery = hood ? `${hood}, ${city}, Brasil` : `${city}, Brasil`;
+
+  if (!city) { showNotif('Atenção', 'Informe a cidade.'); return; }
+
+  const btn = document.getElementById('hunt-btn');
+  btn.disabled = true;
+  showProg(true);
+  setProgress(5, 'Localizando ' + city + '...', '');
+
+  try {
+    // 1. Geocode
+    const { lat, lng } = await geocode(searchQuery);
+    setProgress(25, 'Buscando empresas no OpenStreetMap...', `${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+
+    // 2. Overpass query
+    const query = buildOverpassQuery(lat, lng, radius, category);
+    const overpassUrl = 'https://overpass-api.de/api/interpreter';
+    const res = await fetch(overpassUrl, {
+      method: 'POST',
+      body: 'data=' + encodeURIComponent(query),
+    });
+
+    if (!res.ok) throw new Error('Erro Overpass API: ' + res.status);
+    const data = await res.json();
+    const elements = data.elements || [];
+
+    setProgress(65, `${elements.length} locais encontrados. Qualificando...`, 'Aplicando regras Vértice...');
+    await sleep(300);
+
+    // 3. Score & filter
+    const raw = elements
+      .filter(e => e.tags && e.tags.name)
+      .map(e => ({
+        id: e.id,
+        name: e.tags.name,
+        tags: e.tags,
+        address: getAddress(e.tags),
+        phone: getPhone(e.tags),
+        website: getWebsite(e.tags),
+        lat: e.lat || (e.center && e.center.lat),
+        lng: e.lon || (e.center && e.center.lon),
+        score: calcScore(e.tags),
+      }))
+      .filter(e => e.score >= minScore)
+      .sort((a, b) => b.score - a.score);
+
+    setProgress(92, 'Finalizando...', `${raw.length} leads qualificados`);
+    await sleep(400);
+
+    leads = raw;
+    renderLeads();
+    showProg(false);
+    btn.disabled = false;
+
+    showNotif('Busca Concluída ▲', `${leads.length} leads encontrados em ${city}.`);
+
+  } catch (err) {
+    showProg(false);
+    btn.disabled = false;
+    showNotif('Erro', err.message);
+    console.error(err);
+  }
+}
+
+// ── RENDER ────────────────────────────────────────────────
+function renderLeads() {
+  const list = document.getElementById('leads-list');
+  const nosite  = leads.filter(l => !l.website).length;
+  const nophone = leads.filter(l => !l.phone).length;
+  const hot     = leads.filter(l => l.score >= 65).length;
+
+  document.getElementById('s-total').textContent  = leads.length;
+  document.getElementById('s-nosite').textContent  = nosite;
+  document.getElementById('s-nophone').textContent = nophone;
+  document.getElementById('s-hot').textContent     = hot;
+
+  if (!leads.length) {
+    list.innerHTML = `<div class="empty">
+      <div class="empty-tri">▲</div>
+      <div class="empty-t">Nenhum lead qualificado</div>
+      <div class="empty-s">Ajuste os filtros e tente novamente</div>
+    </div>`;
+    return;
+  }
+
+  list.innerHTML = leads.map((l, i) => {
+    const sc = scoreClass(l.score);
+    const tagItems = getTags(l);
+    const phoneVal = l.phone || '—';
+    const mapsUrl = l.lat ? `https://www.openstreetmap.org/?mlat=${l.lat}&mlon=${l.lng}#map=18/${l.lat}/${l.lng}` : '#';
+
+    return `<div class="lead-row" id="row-${i}">
+      <div>
+        <div class="l-name">${l.name}</div>
+        <div class="l-type">${(l.tags.amenity || l.tags.shop || l.tags.leisure || l.tags.office || '').replace(/_/g,' ')}</div>
+      </div>
+      <div>
+        <div class="l-addr">${l.address}</div>
+        ${l.lat ? `<a href="${mapsUrl}" target="_blank" style="font-size:8px;color:var(--gold-dim);letter-spacing:0.1em;">↗ VER NO MAPA</a>` : ''}
+      </div>
+      <div>
+        <div class="score-wrap ${sc}">
+          <div class="score-track"><div class="score-fill" style="width:${l.score}%"></div></div>
+          <span class="score-num">${l.score}</span>
+        </div>
+      </div>
+      <div class="tags">${tagItems.map(t => `<span class="tag ${t.cls}">${t.txt}</span>`).join('')}</div>
+      <div>
+        ${l.phone
+          ? `<a class="phone-link" href="tel:${l.phone}">${l.phone}</a>`
+          : `<span style="font-size:9px;color:var(--text-dim)">—</span>`
+        }
+      </div>
+      <div>
+        <button class="btn-crm" id="btn-${i}" onclick="sendOne(${i})">⟶ CRM</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── CRM ───────────────────────────────────────────────────
+function sendOne(i) {
+  const l = leads[i];
+  const btn = document.getElementById('btn-' + i);
+  const payload = {
+    nome: l.name,
+    endereco: l.address,
+    telefone: l.phone || '',
+    website: l.website || '',
+    score: l.score,
+    origem: 'Lead Hunter · OpenStreetMap',
+    tags: getTags(l).map(t => t.txt).join(', '),
+    osm_id: l.id,
+    lat: l.lat,
+    lng: l.lng,
+    data_captura: new Date().toISOString(),
+  };
+
+  const stored = JSON.parse(localStorage.getItem('vertice-crm-leads') || '[]');
+  stored.push(payload);
+  localStorage.setItem('vertice-crm-leads', JSON.stringify(stored));
+
+  const wh = localStorage.getItem('webhook-url');
+  if (wh) {
+    fetch(wh, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+      .catch(() => {});
+  }
+
+  btn.textContent = '✓ ENVIADO';
+  btn.classList.add('sent');
+  btn.disabled = true;
+  showNotif('Lead Enviado ▲', `${l.name} adicionado ao CRM.`);
+}
+
+function sendAllCRM() {
+  if (!leads.length) { showNotif('Sem Leads', 'Faça uma busca primeiro.'); return; }
+  let count = 0;
+  leads.forEach((_, i) => {
+    const btn = document.getElementById('btn-' + i);
+    if (btn && !btn.disabled) { sendOne(i); count++; }
+  });
+  showNotif('CRM Atualizado ▲', `${count} leads enviados ao CRM Vértice.`);
+}
+
+// ── SORT / CLEAR / EXPORT ─────────────────────────────────
+function sortBy(key) {
+  sortDir[key] = !sortDir[key];
+  leads.sort((a, b) => {
+    if (key === 'score') return sortDir[key] ? a.score - b.score : b.score - a.score;
+    if (key === 'name')  return sortDir[key] ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+    return 0;
+  });
+  renderLeads();
+}
+
+function clearAll() { leads = []; renderLeads(); }
+
+function exportCSV() {
+  if (!leads.length) { showNotif('Sem Dados', 'Faça uma busca primeiro.'); return; }
+  const h = ['Nome','Endereço','Telefone','Website','Score','Tags','OSM ID','Lat','Lng'];
+  const rows = leads.map(l => [
+    `"${l.name}"`, `"${l.address}"`, `"${l.phone||''}"`, `"${l.website||''}"`,
+    l.score, `"${getTags(l).map(t=>t.txt).join('; ')}"`, l.id, l.lat||'', l.lng||''
+  ]);
+  const csv = [h.join(','), ...rows.map(r => r.join(','))].join('\n');
+  const blob = new Blob(['\uFEFF'+csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href = url;
+  a.download = `vertice-leads-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click(); URL.revokeObjectURL(url);
+  showNotif('CSV Exportado', `${leads.length} leads exportados.`);
+}
+
+// ── UTILS ─────────────────────────────────────────────────
+function showProg(show) { document.getElementById('prog-ov').classList.toggle('on', show); }
+function setProgress(pct, sub, detail) {
+  document.getElementById('prog-fill').style.width = pct + '%';
+  document.getElementById('prog-sub').textContent = sub;
+  document.getElementById('prog-detail').textContent = detail;
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function showNotif(title, msg) {
+  const n = document.getElementById('notif');
+  document.getElementById('notif-t').textContent = title;
+  document.getElementById('notif-m').textContent = msg;
+  n.classList.add('on');
+  setTimeout(() => n.classList.remove('on'), 4000);
+}
+
+// ── DEMO DATA ─────────────────────────────────────────────
+window.addEventListener('DOMContentLoaded', () => {
+  leads = [
+    { id:1, name:'Barbearia Dom Pedro', tags:{ amenity:'barber' }, address:'Av. João Pessoa, 412 - Centro', phone:null, website:null, score:0, lat:-30.034, lng:-51.217 },
+    { id:2, name:'Restaurante do Seu Jorge', tags:{ amenity:'restaurant' }, address:'R. da Conceição, 88 - Cidade Baixa', phone:'(51) 99812-3456', website:null, score:0, lat:-30.041, lng:-51.220 },
+    { id:3, name:'Salão Bella Arte', tags:{ shop:'hairdresser' }, address:'R. Ramiro Barcelos, 1200 - Floresta', phone:null, website:null, score:0, lat:-30.028, lng:-51.215 },
+    { id:4, name:'Oficina Mota & Filhos', tags:{ shop:'car_repair' }, address:'Av. Carlos Gomes, 300 - Auxiliadora', phone:'(51) 3333-4444', website:null, score:0, lat:-30.022, lng:-51.211 },
+    { id:5, name:'Padaria Pão Quente', tags:{ shop:'bakery' }, address:'R. Garibaldi, 55 - Rio Branco', phone:null, website:null, score:0, lat:-30.019, lng:-51.209 },
+    { id:6, name:'Clínica Sorrir', tags:{ amenity:'dentist' }, address:'Av. Independência, 770 - Independência', phone:'(51) 98765-0000', website:null, score:0, lat:-30.025, lng:-51.205 },
+  ];
+  leads.forEach(l => { l.score = calcScore(l.tags); });
+  leads = leads.filter(l => l.score >= 30).sort((a,b) => b.score - a.score);
+  renderLeads();
+});
+</script>
+</body>
+</html>
