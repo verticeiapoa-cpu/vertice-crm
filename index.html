@@ -968,6 +968,7 @@ function renderTable() {
 }
 
 let _wppNum = '';
+let _wppMsgs = [];
 
 function openWhatsApp(id) {
   const c = clients.find(x => x.id === id);
@@ -979,30 +980,33 @@ function openWhatsApp(id) {
 
   const msgs = [
     {
-      label: '1 · Apresentação inicial',
-      texto: `Olá, ${c.nome}! Tudo bem? 😊\n\nSou da *Vértice Agência Digital* e estou entrando em contato porque acredito que podemos ajudar o *${c.negocio}* a ter mais visibilidade online.\n\nTeria um minutinho para eu apresentar nossa proposta?`
+      label: '1 · Direta',
+      texto: `Olá, ${c.nome}! Vi o perfil da *${c.negocio}* e posso ajudar a atrair mais clientes e também melhorar a gestão do seu negócio. Oferecemos site, automações, agenda online, catálogo digital e muito mais. Teria um minutinho? 🚀 verticeiapoa.lovable.app`
     },
     {
-      label: '2 · Proposta pronta',
-      texto: `Olá, ${c.nome}! 👋\n\nPreparamos uma proposta personalizada para o *${c.negocio}*. Ela inclui tudo que precisamos para colocar seu negócio em destaque no digital.\n\nPodemos conversar sobre os detalhes?`
+      label: '2 · Consultiva',
+      texto: `Oi, ${c.nome}! Sou o Fábio da Vértice. Vi o perfil da *${c.negocio}* e acredito que consigo ajudar a trazer mais clientes e organizar melhor o negócio. Trabalhamos com site, agenda online, catálogo digital, CRM e painel admin. Teria um minutinho? 😊 verticeiapoa.lovable.app`
     },
     {
-      label: '3 · Follow-up / retorno',
-      texto: `Olá, ${c.nome}! Tudo bem? 😊\n\nPassando para verificar se você teve a oportunidade de analisar nossa proposta para o *${c.negocio}*.\n\nFicou alguma dúvida? Estou à disposição! 🙌`
+      label: '3 · Follow-up',
+      texto: `Olá, ${c.nome}! Passando para ver se teve a oportunidade de conhecer a Vértice. Ajudamos a *${c.negocio}* a crescer online com site, automações, agenda, catálogo e gestão completa — tudo em até 3 dias. Ficou alguma dúvida? verticeiapoa.lovable.app`
     }
   ];
 
-  document.getElementById('wpp-msgs').innerHTML = msgs.map(m => `
+  _wppMsgs = msgs;
+
+  document.getElementById('wpp-msgs').innerHTML = msgs.map((m, i) => `
     <div>
       <div class="wpp-msg-label">${m.label}</div>
-      <button class="wpp-msg-opt" onclick="sendWhatsApp(${JSON.stringify(m.texto).replace(/'/g,"\\'")})">${m.texto.replace(/\n/g,'<br>').replace(/\*(.*?)\*/g,'<strong>$1</strong>')}</button>
+      <button class="wpp-msg-opt" onclick="sendWhatsApp(${i})">${m.texto.replace(/\n/g,'<br>').replace(/\*(.*?)\*/g,'<strong>$1</strong>')}</button>
     </div>
   `).join('');
 
   document.getElementById('modal-whatsapp').classList.add('open');
 }
 
-function sendWhatsApp(msg) {
+function sendWhatsApp(idx) {
+  const msg = _wppMsgs[idx].texto;
   const url = `https://wa.me/${_wppNum}?text=${encodeURIComponent(msg)}`;
   window.open(url, '_blank');
   closeModal('whatsapp');
