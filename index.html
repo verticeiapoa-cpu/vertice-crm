@@ -210,6 +210,26 @@ body{font-family:'DM Sans',sans-serif;background:var(--noir);color:var(--cream);
   cursor:pointer;border-radius:2px;transition:all 0.2s;
 }
 .btn-sm:hover{border-color:var(--gold);color:var(--gold)}
+.btn-wpp {
+  background: rgba(37,211,102,0.1);
+  border: 1px solid rgba(37,211,102,0.25);
+  color: #25d366;
+}
+.btn-wpp:hover { border-color: #25d366; background: rgba(37,211,102,0.18); }
+
+/* Modal WhatsApp */
+.wpp-msgs { display:flex; flex-direction:column; gap:10px; }
+.wpp-msg-opt {
+  background: var(--graph); border: 1px solid rgba(201,169,110,0.15);
+  border-radius:3px; padding:14px 16px; cursor:pointer;
+  transition:all 0.2s; text-align:left; width:100%;
+  font-family:'DM Sans',sans-serif; color:var(--cream); font-size:13px; line-height:1.5;
+}
+.wpp-msg-opt:hover { border-color:var(--gold); background:var(--graph2); }
+.wpp-msg-label {
+  font-size:10px; letter-spacing:.1em; text-transform:uppercase;
+  color:var(--gold); margin-bottom:6px; font-weight:500;
+}
 
 /* ── FINANCEIRO ── */
 .fin-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:24px}
@@ -644,6 +664,21 @@ body{font-family:'DM Sans',sans-serif;background:var(--noir);color:var(--cream);
   </div>
 </div>
 
+<div class="modal-overlay" id="modal-whatsapp">
+  <div class="modal" style="max-width:500px">
+    <div class="modal-header">
+      <div class="modal-title">WhatsApp <em>primeiro contato</em></div>
+      <button class="modal-close" onclick="closeModal('whatsapp')">✕</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:12px;color:var(--muted);margin-bottom:16px">
+        Escolha a mensagem para <strong id="wpp-cliente-nome" style="color:var(--gold)"></strong>
+      </p>
+      <div class="wpp-msgs" id="wpp-msgs"></div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ══════════════════════════════════════
 // STATE
@@ -927,9 +962,50 @@ function renderTable() {
       <td class="td-gold">${c.valor ? 'R$'+c.valor.toLocaleString('pt-BR') : '—'}</td>
       <td><span class="status-badge ${c.status}"><span class="status-dot"></span>${statusLabel[c.status]||c.status}</span></td>
       <td class="td-muted" style="font-size:11px">${c.prazo ? new Date(c.prazo+'T12:00:00').toLocaleDateString('pt-BR') : '—'} ${pagEmoji[c.pagamento]||''}</td>
-      <td><div class="td-actions"><button class="btn-sm" onclick="event.stopPropagation();openDetail(${c.id})">Ver</button></div></td>
+      <td><div class="td-actions"><button class="btn-sm" onclick="event.stopPropagation();openDetail(${c.id})">Ver</button>${c.whatsapp ? `<button class="btn-sm btn-wpp" onclick="event.stopPropagation();openWhatsApp(${c.id})">WhatsApp</button>` : ''}</div></td>
     </tr>
   `).join('') : `<tr><td colspan="6"><div class="empty-state"><div class="es-icon">◌</div><p>Nenhum cliente encontrado.<br>Clique em "+ Novo cliente" para começar.</p></div></td></tr>`;
+}
+
+let _wppNum = '';
+
+function openWhatsApp(id) {
+  const c = clients.find(x => x.id === id);
+  if (!c) return;
+  _wppNum = (c.whatsapp || '').replace(/\D/g, '');
+  if (!_wppNum.startsWith('55')) _wppNum = '55' + _wppNum;
+
+  document.getElementById('wpp-cliente-nome').textContent = c.nome;
+
+  const msgs = [
+    {
+      label: '1 · Apresentação inicial',
+      texto: `Olá, ${c.nome}! Tudo bem? 😊\n\nSou da *Vértice Agência Digital* e estou entrando em contato porque acredito que podemos ajudar o *${c.negocio}* a ter mais visibilidade online.\n\nTeria um minutinho para eu apresentar nossa proposta?`
+    },
+    {
+      label: '2 · Proposta pronta',
+      texto: `Olá, ${c.nome}! 👋\n\nPreparamos uma proposta personalizada para o *${c.negocio}*. Ela inclui tudo que precisamos para colocar seu negócio em destaque no digital.\n\nPodemos conversar sobre os detalhes?`
+    },
+    {
+      label: '3 · Follow-up / retorno',
+      texto: `Olá, ${c.nome}! Tudo bem? 😊\n\nPassando para verificar se você teve a oportunidade de analisar nossa proposta para o *${c.negocio}*.\n\nFicou alguma dúvida? Estou à disposição! 🙌`
+    }
+  ];
+
+  document.getElementById('wpp-msgs').innerHTML = msgs.map(m => `
+    <div>
+      <div class="wpp-msg-label">${m.label}</div>
+      <button class="wpp-msg-opt" onclick="sendWhatsApp(${JSON.stringify(m.texto).replace(/'/g,"\\'")})">${m.texto.replace(/\n/g,'<br>').replace(/\*(.*?)\*/g,'<strong>$1</strong>')}</button>
+    </div>
+  `).join('');
+
+  document.getElementById('modal-whatsapp').classList.add('open');
+}
+
+function sendWhatsApp(msg) {
+  const url = `https://wa.me/${_wppNum}?text=${encodeURIComponent(msg)}`;
+  window.open(url, '_blank');
+  closeModal('whatsapp');
 }
 
 function filterClients(f, el) {
