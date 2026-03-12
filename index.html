@@ -353,6 +353,64 @@ body{font-family:'DM Sans',sans-serif;background:var(--noir);color:var(--cream);
 .empty-state .es-icon{font-size:40px;margin-bottom:12px;opacity:0.4}
 .empty-state p{font-size:14px;line-height:1.7}
 
+/* ── REATIVAR BADGE ── */
+.reativar-badge{
+  font-size:7px;letter-spacing:.1em;
+  background:rgba(196,114,90,0.18);
+  border:1px solid rgba(196,114,90,0.45);
+  color:var(--rose-l);
+  padding:2px 6px;border-radius:2px;
+  font-family:'DM Mono',monospace;
+  animation:pulse 2s infinite;
+}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+
+/* ── TOAST ── */
+#toast{
+  position:fixed;bottom:24px;right:24px;z-index:9999;
+  background:var(--graph2);border:1px solid rgba(201,169,110,0.3);
+  border-radius:3px;padding:12px 18px;font-size:12px;color:var(--cream);
+  display:flex;align-items:center;gap:10px;
+  animation:slideUp .3s ease;
+  transition:opacity .3s;
+}
+@keyframes slideUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── ANALYTICS ── */
+.analytics-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px}
+.an-card{background:var(--graph);border:1px solid rgba(201,169,110,0.12);border-radius:3px;padding:18px 20px}
+.an-label{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--muted);text-transform:uppercase;margin-bottom:8px}
+.an-value{font-family:'Cormorant Garamond',serif;font-size:28px;color:var(--cream);line-height:1}
+.an-sub{font-size:11px;color:var(--muted);margin-top:4px}
+.an-bar-wrap{margin-bottom:12px}
+.an-bar-label{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px}
+.an-bar-track{height:8px;background:var(--graph3);border-radius:4px;overflow:hidden}
+.an-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--gold-d),var(--gold));transition:width .6s ease}
+.an-table{width:100%;border-collapse:collapse;margin-top:8px}
+.an-table th{font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--gold-d);text-transform:uppercase;padding:8px 0;border-bottom:1px solid rgba(201,169,110,0.15)}
+.an-table td{padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);font-size:12px;color:var(--cream)}
+.an-two-col{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px}
+
+/* ── CNPJ ROW ── */
+.cnpj-row{display:flex;gap:8px;align-items:flex-end}
+.cnpj-row input{flex:1}
+.cnpj-btn{
+  background:var(--graph3);border:1px solid rgba(201,169,110,0.25);color:var(--gold-d);
+  padding:10px 14px;border-radius:2px;cursor:pointer;font-size:12px;
+  white-space:nowrap;transition:all .2s;flex-shrink:0;height:42px;
+}
+.cnpj-btn:hover{border-color:var(--gold);color:var(--gold)}
+.cnpj-status{font-size:10px;margin-top:4px;font-family:'DM Mono',monospace}
+
+/* ── CONTATO LOG ── */
+.log-entry{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.05);align-items:flex-start}
+.log-entry:last-child{border-bottom:none}
+.log-canal{font-size:9px;letter-spacing:.1em;text-transform:uppercase;padding:2px 6px;border-radius:2px;font-family:'DM Mono',monospace;flex-shrink:0;margin-top:1px}
+.log-canal.whatsapp{background:rgba(37,211,102,0.12);color:#25d366;border:1px solid rgba(37,211,102,0.25)}
+.log-canal.ligacao{background:rgba(74,122,171,0.12);color:var(--blue-l);border:1px solid rgba(74,122,171,0.25)}
+.log-canal.email{background:rgba(201,169,110,0.1);color:var(--gold-d);border:1px solid rgba(201,169,110,0.2)}
+.log-canal.outro{background:var(--graph3);color:var(--muted);border:1px solid rgba(255,255,255,0.08)}
+
 /* ── MOBILE ── */
 .hamburger{
   display:none;position:fixed;top:14px;left:14px;z-index:150;
@@ -431,6 +489,9 @@ body{font-family:'DM Sans',sans-serif;background:var(--noir);color:var(--cream);
   <div class="nav-section">Financeiro</div>
   <div class="nav-item" onclick="showView('financeiro')">
     <span class="nav-icon">◇</span> Financeiro
+  </div>
+  <div class="nav-item" onclick="showView('analytics')">
+    <span class="nav-icon">◎</span> Analytics
   </div>
 
   <div style="padding:12px 16px">
@@ -611,7 +672,56 @@ body{font-family:'DM Sans',sans-serif;background:var(--noir);color:var(--cream);
     </div>
   </div>
 
+  <!-- ANALYTICS -->
+  <div class="view" id="view-analytics">
+    <div class="topbar">
+      <h1 class="page-title">Analytics de <em>conversão</em></h1>
+      <button class="btn-sm" onclick="loadAnalytics()">↻ Atualizar</button>
+    </div>
+    <div id="analytics-content">
+      <div class="empty-state"><div class="es-icon">◎</div><p>Clique em "Atualizar" para carregar os dados.</p></div>
+    </div>
+  </div>
+
 </main>
+
+<!-- MODAL: CONTATO LOG -->
+<div class="modal-overlay" id="modal-contato-log">
+  <div class="modal" style="max-width:460px">
+    <div class="modal-header">
+      <div class="modal-title">Registrar <em>contato</em></div>
+      <button class="modal-close" onclick="closeModal('contato-log')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Canal de contato</label>
+        <select id="log-canal">
+          <option value="whatsapp">WhatsApp</option>
+          <option value="ligacao">Ligação</option>
+          <option value="email">E-mail</option>
+          <option value="outro">Outro</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Resultado</label>
+        <select id="log-resultado">
+          <option value="sem_resposta">Sem resposta</option>
+          <option value="interesse">Interesse demonstrado</option>
+          <option value="sem_interesse">Sem interesse</option>
+          <option value="agendado">Reunião agendada</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label>Observação (opcional)</label>
+        <textarea id="log-obs" placeholder="Detalhes do contato..."></textarea>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" onclick="closeModal('contato-log')">Cancelar</button>
+      <button class="btn-primary" onclick="saveContatoLog()">Salvar contato</button>
+    </div>
+  </div>
+</div>
 
 <!-- MODAL: NOVO CLIENTE -->
 <div class="modal-overlay" id="modal-novo-cliente">
@@ -698,6 +808,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--noir);color:var(--cream);
         </select>
       </div>
       <div class="form-group">
+        <label>CNPJ (opcional)</label>
+        <div class="cnpj-row">
+          <input type="text" id="nc-cnpj" placeholder="00.000.000/0001-00" maxlength="18">
+          <button type="button" class="cnpj-btn" onclick="lookupCNPJ()">🔍 Consultar</button>
+        </div>
+        <div class="cnpj-status" id="cnpj-status" style="color:var(--muted)"></div>
+      </div>
+      <div class="form-group">
         <label>Observações</label>
         <textarea id="nc-obs" placeholder="Canal de contato, indicação, detalhes do projeto..."></textarea>
       </div>
@@ -744,10 +862,11 @@ body{font-family:'DM Sans',sans-serif;background:var(--noir);color:var(--cream);
 // ══════════════════════════════════════
 // STATE
 // ══════════════════════════════════════
-let clients = JSON.parse(localStorage.getItem('vertice-crm') || '[]');
+let clients = [];
 let currentDetailId = null;
 let currentFilter = 'todos';
 let currentSearch = '';
+let currentLogLeadId = null;
 
 const PACOTE_VALOR = {
   'Landing Page Essencial · R$350': 350,
@@ -756,22 +875,99 @@ const PACOTE_VALOR = {
 };
 
 // ══════════════════════════════════════
+// TOAST
+// ══════════════════════════════════════
+function showToast(msg, tipo = 'ok') {
+  const old = document.getElementById('toast');
+  if (old) old.remove();
+  const t = document.createElement('div');
+  t.id = 'toast';
+  const icon = tipo === 'erro' ? '⚠' : tipo === 'info' ? 'ℹ' : '✓';
+  const cor = tipo === 'erro' ? 'var(--rose-l)' : tipo === 'info' ? 'var(--gold-d)' : 'var(--green-l)';
+  t.innerHTML = `<span style="color:${cor}">${icon}</span> ${msg}`;
+  document.body.appendChild(t);
+  setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 3000);
+}
+
+// ══════════════════════════════════════
+// API HELPERS
+// ══════════════════════════════════════
+async function apiFetch(url, opts = {}) {
+  const r = await fetch(url, {
+    headers: { 'Content-Type': 'application/json' },
+    ...opts,
+  });
+  if (!r.ok) {
+    const err = await r.json().catch(() => ({ detail: r.statusText }));
+    throw new Error(err.detail || 'Erro na API');
+  }
+  return r.json();
+}
+
+// ══════════════════════════════════════
+// MIGRAÇÃO DO LOCALSTORAGE
+// ══════════════════════════════════════
+async function migrateFromLocalStorage() {
+  const oldData = JSON.parse(localStorage.getItem('vertice-crm') || '[]');
+  if (!oldData.length) return false;
+
+  try {
+    const result = await apiFetch('/api/clientes/migrate', {
+      method: 'POST',
+      body: JSON.stringify(oldData),
+    });
+    localStorage.removeItem('vertice-crm');
+    if (result.migrados > 0) {
+      showToast(`${result.migrados} clientes migrados do armazenamento local para o banco de dados.`, 'info');
+    }
+    return result.migrados > 0;
+  } catch (e) {
+    console.error('Migração falhou:', e);
+    return false;
+  }
+}
+
+// ══════════════════════════════════════
+// CARREGAR CLIENTES DA API
+// ══════════════════════════════════════
+async function loadClients() {
+  try {
+    const dbClients = await apiFetch('/api/clientes');
+    if (dbClients.length === 0) {
+      await migrateFromLocalStorage();
+      clients = await apiFetch('/api/clientes');
+    } else {
+      clients = dbClients;
+    }
+  } catch (e) {
+    const local = JSON.parse(localStorage.getItem('vertice-crm') || '[]');
+    clients = local;
+    showToast('Modo offline: usando dados locais', 'info');
+  }
+  renderAll();
+}
+
+// ══════════════════════════════════════
 // NAVIGATION
 // ══════════════════════════════════════
 function showView(name) {
   document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
   document.getElementById('view-' + name).classList.add('active');
+
+  const labels = {
+    dashboard: 'dashboard', pipeline: 'pipeline',
+    clientes: 'clientes', financeiro: 'financeiro', analytics: 'analytics',
+  };
   document.querySelectorAll('.nav-item').forEach(n => {
-    if (n.textContent.toLowerCase().includes(name === 'dashboard' ? 'dashboard' :
-        name === 'pipeline' ? 'pipeline' :
-        name === 'clientes' ? 'clientes' : 'financeiro')) {
-      n.classList.add('active');
-    }
+    const txt = n.textContent.toLowerCase();
+    if (labels[name] && txt.includes(labels[name])) n.classList.add('active');
   });
+
   if (name === 'pipeline') renderPipeline('full-pipeline');
   if (name === 'clientes') renderTable();
   if (name === 'financeiro') renderFinanceiro();
+  if (name === 'analytics') loadAnalytics();
   if (window.innerWidth <= 768) closeSidebar();
 }
 
@@ -796,7 +992,7 @@ function closeModal(name) {
 }
 
 function clearForm() {
-  ['nc-nome','nc-negocio','nc-whatsapp','nc-obs','nc-valor'].forEach(id => {
+  ['nc-nome','nc-negocio','nc-whatsapp','nc-obs','nc-valor','nc-cnpj'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
@@ -804,52 +1000,105 @@ function clearForm() {
     const el = document.getElementById(id);
     if (el) el.selectedIndex = 0;
   });
-  document.getElementById('nc-prazo').value = '';
+  const prazo = document.getElementById('nc-prazo');
+  if (prazo) prazo.value = '';
+  const status = document.getElementById('cnpj-status');
+  if (status) status.textContent = '';
+}
+
+// ══════════════════════════════════════
+// CNPJ LOOKUP
+// ══════════════════════════════════════
+async function lookupCNPJ() {
+  const raw = (document.getElementById('nc-cnpj').value || '').replace(/\D/g, '');
+  const statusEl = document.getElementById('cnpj-status');
+  if (raw.length !== 14) {
+    statusEl.textContent = 'CNPJ deve ter 14 dígitos';
+    statusEl.style.color = 'var(--rose-l)';
+    return;
+  }
+  statusEl.textContent = 'Consultando Receita Federal...';
+  statusEl.style.color = 'var(--muted)';
+  try {
+    const d = await apiFetch(`/api/cnpj/${raw}`);
+    const nomeNeg = d.nome_fantasia || d.razao_social || '';
+    const nomeEl = document.getElementById('nc-negocio');
+    if (nomeEl && !nomeEl.value) nomeEl.value = nomeNeg;
+    const obs = document.getElementById('nc-obs');
+    const extra = [
+      d.atividade_principal ? `Atividade: ${d.atividade_principal}` : '',
+      d.municipio ? `Município: ${d.municipio}/${d.uf}` : '',
+      d.data_abertura ? `Abertura: ${d.data_abertura}` : '',
+      d.situacao ? `Situação: ${d.situacao}` : '',
+    ].filter(Boolean).join(' | ');
+    if (obs && !obs.value) obs.value = extra;
+    statusEl.textContent = `✓ ${d.razao_social} · ${d.situacao || ''}`;
+    statusEl.style.color = 'var(--green-l)';
+    if (d.telefone) {
+      const wpp = document.getElementById('nc-whatsapp');
+      if (wpp && !wpp.value) wpp.value = d.telefone;
+    }
+  } catch (e) {
+    statusEl.textContent = e.message || 'CNPJ não encontrado';
+    statusEl.style.color = 'var(--rose-l)';
+  }
 }
 
 // ══════════════════════════════════════
 // SAVE CLIENT
 // ══════════════════════════════════════
-function saveClient() {
+async function saveClient() {
   const nome = document.getElementById('nc-nome').value.trim();
   const negocio = document.getElementById('nc-negocio').value.trim();
   const whatsapp = document.getElementById('nc-whatsapp').value.trim();
-  if (!nome || !negocio) { alert('Nome e negócio são obrigatórios.'); return; }
+  if (!nome || !negocio) { showToast('Nome e negócio são obrigatórios.', 'erro'); return; }
 
   const pacote = document.getElementById('nc-pacote').value;
   const valorInput = parseFloat(document.getElementById('nc-valor').value) || 0;
-  const valor = valorInput || PACOTE_VALOR[pacote] || 0;
+  const valor = valorInput || PACOTE_VALOR[pacote] || null;
 
-  const client = {
-    id: Date.now(),
+  const payload = {
     nome, negocio, whatsapp,
-    segmento: document.getElementById('nc-segmento').value,
-    pacote,
+    segmento: document.getElementById('nc-segmento').value || null,
+    pacote: pacote || null,
     valor,
     status: document.getElementById('nc-status').value,
     pagamento: document.getElementById('nc-pagamento').value,
-    prazo: document.getElementById('nc-prazo').value,
-    obs: document.getElementById('nc-obs').value.trim(),
-    criado: new Date().toISOString(),
-    historico: [{ texto: 'Cliente cadastrado', data: new Date().toLocaleDateString('pt-BR') }]
+    prazo: document.getElementById('nc-prazo').value || null,
+    obs: document.getElementById('nc-obs').value.trim() || null,
+    cnpj: document.getElementById('nc-cnpj').value.trim() || null,
+    historico: [{ texto: 'Cliente cadastrado', data: new Date().toLocaleDateString('pt-BR') }],
   };
 
-  clients.push(client);
-  persist();
-  closeModal('novo-cliente');
-  renderAll();
+  try {
+    const created = await apiFetch('/api/clientes', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+    clients.unshift(created);
+    closeModal('novo-cliente');
+    renderAll();
+    showToast(`${nome} adicionado com sucesso`);
+  } catch (e) {
+    showToast(e.message, 'erro');
+  }
 }
 
 // ══════════════════════════════════════
 // DELETE CLIENT
 // ══════════════════════════════════════
-function deleteClient() {
+async function deleteClient() {
   if (!currentDetailId) return;
   if (!confirm('Excluir este cliente permanentemente?')) return;
-  clients = clients.filter(c => c.id !== currentDetailId);
-  persist();
-  closeModal('detalhe');
-  renderAll();
+  try {
+    await apiFetch(`/api/clientes/${currentDetailId}`, { method: 'DELETE' });
+    clients = clients.filter(c => c.id !== currentDetailId);
+    closeModal('detalhe');
+    renderAll();
+    showToast('Cliente excluído');
+  } catch (e) {
+    showToast(e.message, 'erro');
+  }
 }
 
 // ══════════════════════════════════════
@@ -864,19 +1113,25 @@ function openDetail(id) {
   const statusOpts = ['prospect','proposta','fechado','entregue','cancelado'];
   const statusLabels = { prospect:'Prospect', proposta:'Proposta', fechado:'Fechado', entregue:'Entregue', cancelado:'Cancelado' };
 
+  const diasSemAtualizar = c.status_atualizado_em
+    ? Math.floor((Date.now() - new Date(c.status_atualizado_em).getTime()) / 86400000)
+    : 0;
+
   let html = `
   <div style="margin-bottom:16px">
     <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:1.5px;color:var(--gold-d);text-transform:uppercase;margin-bottom:8px">Status do projeto</div>
     <div class="status-select-row">
-      ${statusOpts.map(s => `<div class="status-opt ${s} ${c.status===s?'selected':''}" onclick="updateStatus(${id},'${s}',this)">${statusLabels[s]}</div>`).join('')}
+      ${statusOpts.map(s => `<div class="status-opt ${s} ${c.status===s?'selected':''}" onclick="updateStatus('${id}','${s}',this)">${statusLabels[s]}</div>`).join('')}
     </div>
+    ${diasSemAtualizar >= 7 && ['prospect','proposta'].includes(c.status) ? `<div style="font-size:11px;color:var(--rose-l);margin-top:6px">⚑ Status não atualizado há ${diasSemAtualizar} dias — considere reativar este contato.</div>` : ''}
   </div>
   <div class="detail-grid">
     <div class="detail-block">
       <div class="detail-block-title">Contato</div>
       <div class="detail-row"><span class="detail-key">WhatsApp</span><span class="detail-val">${c.whatsapp||'—'}</span></div>
       <div class="detail-row"><span class="detail-key">Segmento</span><span class="detail-val">${c.segmento||'—'}</span></div>
-      <div class="detail-row"><span class="detail-key">Cadastrado em</span><span class="detail-val">${new Date(c.criado).toLocaleDateString('pt-BR')}</span></div>
+      <div class="detail-row"><span class="detail-key">CNPJ</span><span class="detail-val">${c.cnpj||'—'}</span></div>
+      <div class="detail-row"><span class="detail-key">Cadastrado em</span><span class="detail-val">${new Date(c.criado_em).toLocaleDateString('pt-BR')}</span></div>
     </div>
     <div class="detail-block">
       <div class="detail-block-title">Projeto</div>
@@ -909,7 +1164,7 @@ function openDetail(id) {
     `).join('')}
     <div style="display:flex;gap:8px;margin-top:12px">
       <input type="text" id="new-history" placeholder="Adicionar anotação..." style="flex:1;background:var(--graph);border:1px solid rgba(201,169,110,0.15);color:var(--cream);padding:8px 12px;font-size:12px;border-radius:2px;outline:none;font-family:'DM Sans',sans-serif">
-      <button class="btn-sm" onclick="addHistory(${id})" style="padding:8px 14px">+ Add</button>
+      <button class="btn-sm" onclick="addHistory('${id}')" style="padding:8px 14px">+ Add</button>
     </div>
   </div>`;
 
@@ -917,49 +1172,101 @@ function openDetail(id) {
   openModal('detalhe');
 }
 
-function updateStatus(id, status, el) {
-  const c = clients.find(x => x.id === id);
-  if (!c) return;
-  const old = c.status;
-  c.status = status;
-  const labels = { prospect:'Prospect', proposta:'Proposta enviada', fechado:'Projeto fechado', entregue:'Projeto entregue', cancelado:'Cancelado' };
-  c.historico = c.historico || [];
-  c.historico.push({ texto: `Status: ${labels[old]||old} → ${labels[status]}`, data: new Date().toLocaleDateString('pt-BR') });
-  persist();
-  // Update UI
-  document.querySelectorAll('.status-opt').forEach(o => o.classList.remove('selected'));
-  el.classList.add('selected');
-  renderAll();
+async function updateStatus(id, status, el) {
+  try {
+    const updated = await apiFetch(`/api/clientes/${id}/status`, {
+      method: 'PUT',
+      body: JSON.stringify({ status }),
+    });
+    const idx = clients.findIndex(x => x.id === id);
+    if (idx !== -1) clients[idx] = updated;
+    document.querySelectorAll('.status-opt').forEach(o => o.classList.remove('selected'));
+    el.classList.add('selected');
+    renderAll();
+  } catch (e) {
+    showToast(e.message, 'erro');
+  }
 }
 
-function addHistory(id) {
-  const c = clients.find(x => x.id === id);
+async function addHistory(id) {
   const input = document.getElementById('new-history');
-  if (!c || !input.value.trim()) return;
-  c.historico = c.historico || [];
-  c.historico.push({ texto: input.value.trim(), data: new Date().toLocaleDateString('pt-BR') });
-  input.value = '';
-  persist();
-  openDetail(id); // re-render
+  if (!input || !input.value.trim()) return;
+  const texto = input.value.trim();
+  try {
+    await apiFetch(`/api/clientes/${id}/historico?texto=${encodeURIComponent(texto)}`, {
+      method: 'POST',
+    });
+    input.value = '';
+    const updated = await apiFetch(`/api/clientes/${id}`);
+    const idx = clients.findIndex(x => x.id === id);
+    if (idx !== -1) clients[idx] = updated;
+    openDetail(id);
+  } catch (e) {
+    showToast(e.message, 'erro');
+  }
 }
 
-function saveDetailChanges() {
-  const c = clients.find(x => x.id === currentDetailId);
-  if (!c) return;
+async function saveDetailChanges() {
+  const id = currentDetailId;
+  if (!id) return;
   const obs = document.getElementById('detail-obs');
   const pag = document.getElementById('detail-pagamento');
-  if (obs) c.obs = obs.value;
-  if (pag) {
-    const oldPag = c.pagamento;
-    c.pagamento = pag.value;
-    if (oldPag !== pag.value) {
-      c.historico = c.historico || [];
-      c.historico.push({ texto: `Pagamento: ${oldPag} → ${pag.value}`, data: new Date().toLocaleDateString('pt-BR') });
-    }
+  const payload = {};
+  if (obs) payload.obs = obs.value;
+  if (pag) payload.pagamento = pag.value;
+
+  try {
+    const updated = await apiFetch(`/api/clientes/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    });
+    const idx = clients.findIndex(x => x.id === id);
+    if (idx !== -1) clients[idx] = updated;
+    closeModal('detalhe');
+    renderAll();
+    showToast('Alterações salvas');
+  } catch (e) {
+    showToast(e.message, 'erro');
   }
-  persist();
-  closeModal('detalhe');
-  renderAll();
+}
+
+// ══════════════════════════════════════
+// CONTATO LOG
+// ══════════════════════════════════════
+function openContatoLog(leadId) {
+  currentLogLeadId = leadId;
+  document.getElementById('log-canal').selectedIndex = 0;
+  document.getElementById('log-resultado').selectedIndex = 0;
+  document.getElementById('log-obs').value = '';
+  openModal('contato-log');
+}
+
+async function saveContatoLog() {
+  if (!currentLogLeadId) return;
+  const canal = document.getElementById('log-canal').value;
+  const resultado = document.getElementById('log-resultado').value;
+  const observacao = document.getElementById('log-obs').value.trim() || null;
+  try {
+    await apiFetch(`/api/leads/${currentLogLeadId}/contatos`, {
+      method: 'POST',
+      body: JSON.stringify({ lead_id: currentLogLeadId, canal, resultado, observacao }),
+    });
+    closeModal('contato-log');
+    showToast('Contato registrado com sucesso');
+  } catch (e) {
+    showToast(e.message, 'erro');
+  }
+}
+
+// ══════════════════════════════════════
+// FOLLOW-UP STALE DETECTION
+// ══════════════════════════════════════
+function isStale(c) {
+  const dt = c.status_atualizado_em
+    ? new Date(c.status_atualizado_em)
+    : new Date(c.criado_em);
+  const diffDays = (Date.now() - dt.getTime()) / 86400000;
+  return diffDays >= 7 && ['prospect', 'proposta'].includes(c.status);
 }
 
 // ══════════════════════════════════════
@@ -978,25 +1285,29 @@ function renderPipeline(containerId) {
   container.innerHTML = cols.map(col => {
     const items = clients.filter(c => c.status === col.key);
     const cards = items.length ? items.map(c => {
-      const isLead = (c.historico||[]).some(h => h.texto && h.texto.includes('Lead Hunter'));
+      const isLead = c.lead_hunter_origin || (c.historico||[]).some(h => h.texto && h.texto.includes('Lead Hunter'));
+      const stale = isStale(c);
       return `
-      <div class="kanban-card" onclick="openDetail(${c.id})">
+      <div class="kanban-card" onclick="openDetail('${c.id}')">
         <div class="kc-bar ${col.key}"></div>
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:4px">
-          <div>
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:4px;flex-wrap:wrap">
+          <div style="min-width:0">
             <div class="kc-name">${c.nome}</div>
             <div class="kc-biz">${c.negocio}${c.segmento ? ' · ' + c.segmento : ''}</div>
           </div>
-          ${isLead ? `<span style="flex-shrink:0;font-size:7px;letter-spacing:.1em;background:rgba(201,169,110,0.12);border:1px solid rgba(201,169,110,0.3);color:var(--gold-d);padding:2px 5px;border-radius:2px;font-family:'DM Mono',monospace;margin-top:1px">▲ LEAD</span>` : ''}
+          <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-end;flex-shrink:0">
+            ${isLead ? `<span style="font-size:7px;letter-spacing:.1em;background:rgba(201,169,110,0.12);border:1px solid rgba(201,169,110,0.3);color:var(--gold-d);padding:2px 5px;border-radius:2px;font-family:'DM Mono',monospace">▲ LEAD</span>` : ''}
+            ${stale ? `<span class="reativar-badge">⚑ REATIVAR</span>` : ''}
+          </div>
         </div>
         <div class="kc-footer" style="margin-top:8px">
           <span class="kc-pkg">${(c.pacote||'').split('·')[0].trim().substring(0,18)}</span>
           <span class="kc-value">${c.valor ? 'R$'+c.valor.toLocaleString('pt-BR') : 'Consulta'}</span>
         </div>
         ${c.prazo ? `<div class="kc-date" style="margin-top:6px">📅 ${new Date(c.prazo+'T12:00:00').toLocaleDateString('pt-BR')}</div>` : ''}
-        ${c.whatsapp ? `<button onclick="event.stopPropagation();openWhatsApp(${c.id})" style="margin-top:8px;width:100%;background:rgba(37,211,102,0.08);border:1px solid rgba(37,211,102,0.25);border-radius:2px;color:#25d366;cursor:pointer;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;padding:5px;text-transform:uppercase;transition:all .2s" onmouseover="this.style.background='rgba(37,211,102,0.18)'" onmouseout="this.style.background='rgba(37,211,102,0.08)'">● WhatsApp</button>` : ''}
-      </div>
-    `}).join('') : `<div class="empty-state" style="padding:30px 10px"><div class="es-icon" style="font-size:24px">◌</div><p style="font-size:12px">Nenhum</p></div>`;
+        ${c.whatsapp ? `<button onclick="event.stopPropagation();openWhatsApp('${c.id}')" style="margin-top:8px;width:100%;background:rgba(37,211,102,0.08);border:1px solid rgba(37,211,102,0.25);border-radius:2px;color:#25d366;cursor:pointer;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;padding:5px;text-transform:uppercase;transition:all .2s" onmouseover="this.style.background='rgba(37,211,102,0.18)'" onmouseout="this.style.background='rgba(37,211,102,0.08)'">● WhatsApp</button>` : ''}
+      </div>`;
+    }).join('') : `<div class="empty-state" style="padding:30px 10px"><div class="es-icon" style="font-size:24px">◌</div><p style="font-size:12px">Nenhum</p></div>`;
 
     return `<div class="pipe-col ${col.cls}">
       <div class="pipe-header">
@@ -1025,13 +1336,16 @@ function renderTable() {
   const pagEmoji = { pago:'✅', parcial:'⏳', pendente:'🔴' };
 
   tbody.innerHTML = list.length ? list.map(c => `
-    <tr onclick="openDetail(${c.id})">
-      <td><div class="td-name">${c.nome}</div><div class="td-muted" style="font-size:11px">${c.negocio}</div></td>
+    <tr onclick="openDetail('${c.id}')">
+      <td>
+        <div class="td-name">${c.nome}${isStale(c) ? ' <span class="reativar-badge">⚑ REATIVAR</span>' : ''}</div>
+        <div class="td-muted" style="font-size:11px">${c.negocio}</div>
+      </td>
       <td class="td-muted" style="font-size:12px">${(c.pacote||'—').split('·')[0].trim()}</td>
       <td class="td-gold">${c.valor ? 'R$'+c.valor.toLocaleString('pt-BR') : '—'}</td>
       <td><span class="status-badge ${c.status}"><span class="status-dot"></span>${statusLabel[c.status]||c.status}</span></td>
       <td class="td-muted" style="font-size:11px">${c.prazo ? new Date(c.prazo+'T12:00:00').toLocaleDateString('pt-BR') : '—'} ${pagEmoji[c.pagamento]||''}</td>
-      <td><div class="td-actions"><button class="btn-sm" onclick="event.stopPropagation();openDetail(${c.id})">Ver</button>${c.whatsapp ? `<button class="btn-sm btn-wpp" onclick="event.stopPropagation();openWhatsApp(${c.id})">WhatsApp</button>` : ''}</div></td>
+      <td><div class="td-actions"><button class="btn-sm" onclick="event.stopPropagation();openDetail('${c.id}')">Ver</button>${c.whatsapp ? `<button class="btn-sm btn-wpp" onclick="event.stopPropagation();openWhatsApp('${c.id}')">WhatsApp</button>` : ''}</div></td>
     </tr>
   `).join('') : `<tr><td colspan="6"><div class="empty-state"><div class="es-icon">◌</div><p>Nenhum cliente encontrado.<br>Clique em "+ Novo cliente" para começar.</p></div></td></tr>`;
 }
@@ -1063,14 +1377,12 @@ function openWhatsApp(id) {
   ];
 
   _wppMsgs = msgs;
-
   document.getElementById('wpp-msgs').innerHTML = msgs.map((m, i) => `
     <div>
       <div class="wpp-msg-label">${m.label}</div>
       <button class="wpp-msg-opt" onclick="sendWhatsApp(${i})">${m.texto.replace(/\n/g,'<br>').replace(/\*(.*?)\*/g,'<strong>$1</strong>')}</button>
     </div>
   `).join('');
-
   document.getElementById('modal-whatsapp').classList.add('open');
 }
 
@@ -1145,22 +1457,136 @@ function renderStats() {
   document.getElementById('stat-total').textContent = clients.length;
 
   const badge = document.getElementById('pipelineBadge');
-  badge.textContent = clients.filter(c => c.status !== 'entregue' && c.status !== 'cancelado').length;
+  if (badge) badge.textContent = clients.filter(c => c.status !== 'entregue' && c.status !== 'cancelado').length;
 
   const lhTotal = document.getElementById('lh-total-leads');
   if (lhTotal) {
-    const leadsImportados = clients.filter(c => (c.historico||[]).some(h => h.texto && h.texto.includes('Lead Hunter'))).length;
+    const leadsImportados = clients.filter(c => c.lead_hunter_origin || (c.historico||[]).some(h => h.texto && h.texto.includes('Lead Hunter'))).length;
     lhTotal.textContent = leadsImportados;
   }
 }
 
 // ══════════════════════════════════════
-// PERSIST & RENDER ALL
+// ANALYTICS
 // ══════════════════════════════════════
-function persist() {
-  localStorage.setItem('vertice-crm', JSON.stringify(clients));
+async function loadAnalytics() {
+  const el = document.getElementById('analytics-content');
+  if (!el) return;
+  el.innerHTML = `<div style="text-align:center;padding:60px;color:var(--muted)"><div style="font-size:32px;margin-bottom:12px">◎</div>Carregando analytics...</div>`;
+  try {
+    const a = await apiFetch('/api/analytics');
+    const fmtR = v => 'R$ ' + (v||0).toLocaleString('pt-BR', {minimumFractionDigits:0, maximumFractionDigits:0});
+    const meta = 2800;
+    const pctMeta = Math.min(100, Math.round((a.receita_total / meta) * 100));
+
+    // Top segmentos por receita
+    const segEntries = Object.entries(a.receita_por_segmento || {}).sort((a,b)=>b[1]-a[1]).slice(0,6);
+    const maxSeg = segEntries.length ? segEntries[0][1] : 1;
+
+    // Status distribuição
+    const statusLabels = { prospect:'Prospect', proposta:'Proposta', fechado:'Fechado', entregue:'Entregue', cancelado:'Cancelado' };
+    const statusCores = { prospect:'var(--blue-l)', proposta:'var(--amber-l)', fechado:'var(--green-l)', entregue:'var(--gold)', cancelado:'var(--rose-l)' };
+    const totalClientesDist = Object.values(a.distribuicao_status||{}).reduce((s,v)=>s+v,0)||1;
+
+    el.innerHTML = `
+      <!-- KPIs principais -->
+      <div class="analytics-grid">
+        <div class="an-card">
+          <div class="an-label">Taxa de conversão</div>
+          <div class="an-value" style="color:var(--gold)">${a.taxa_conversao_pct}%</div>
+          <div class="an-sub">${a.clientes_de_leads} leads → clientes</div>
+        </div>
+        <div class="an-card">
+          <div class="an-label">Receita recebida</div>
+          <div class="an-value">${fmtR(a.receita_total)}</div>
+          <div class="an-sub">${pctMeta}% da meta mensal (R$ 2.800)</div>
+          <div style="margin-top:10px;height:5px;background:var(--graph3);border-radius:3px;overflow:hidden">
+            <div style="height:100%;width:${pctMeta}%;background:linear-gradient(90deg,var(--green),var(--green-l));border-radius:3px;transition:width .6s"></div>
+          </div>
+        </div>
+        <div class="an-card">
+          <div class="an-label">Pipeline (a fechar)</div>
+          <div class="an-value">${fmtR(a.pipeline_valor)}</div>
+          <div class="an-sub">Ticket médio: ${fmtR(a.ticket_medio)}</div>
+        </div>
+      </div>
+      <div class="analytics-grid">
+        <div class="an-card">
+          <div class="an-label">Leads no banco</div>
+          <div class="an-value">${a.total_leads_db}</div>
+          <div class="an-sub">${a.leads_sem_scoring} sem análise de IA</div>
+        </div>
+        <div class="an-card">
+          <div class="an-label">Total clientes CRM</div>
+          <div class="an-value">${a.total_clientes}</div>
+          <div class="an-sub">${a.clientes_de_leads} originados do Lead Hunter</div>
+        </div>
+        <div class="an-card">
+          <div class="an-label">A receber</div>
+          <div class="an-value" style="color:var(--amber-l)">${fmtR(a.receita_pendente)}</div>
+          <div class="an-sub">Pendente de pagamento</div>
+        </div>
+      </div>
+
+      <!-- Distribuição + Segmentos -->
+      <div class="an-two-col">
+        <div class="an-card">
+          <div class="an-label">Pipeline por etapa</div>
+          <div style="margin-top:12px">
+            ${Object.entries(a.distribuicao_status||{}).map(([s,v]) => `
+              <div class="an-bar-wrap">
+                <div class="an-bar-label">
+                  <span style="color:${statusCores[s]||'var(--muted)'}">${statusLabels[s]||s}</span>
+                  <span>${v}</span>
+                </div>
+                <div class="an-bar-track">
+                  <div class="an-bar-fill" style="width:${Math.round(v/totalClientesDist*100)}%;background:${statusCores[s]||'var(--gold)'}"></div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+        <div class="an-card">
+          <div class="an-label">Receita por segmento</div>
+          ${segEntries.length ? `
+          <div style="margin-top:12px">
+            ${segEntries.map(([seg, val]) => `
+              <div class="an-bar-wrap">
+                <div class="an-bar-label"><span>${seg}</span><span>${fmtR(val)}</span></div>
+                <div class="an-bar-track"><div class="an-bar-fill" style="width:${Math.round(val/maxSeg*100)}%"></div></div>
+              </div>
+            `).join('')}
+          </div>` : `<div style="color:var(--off);font-size:12px;padding:20px 0">Nenhum dado de receita por segmento.</div>`}
+        </div>
+      </div>
+
+      <!-- Top Leads IA -->
+      ${a.top_leads && a.top_leads.length ? `
+      <div class="an-card" style="margin-bottom:14px">
+        <div class="an-label">Top leads por pontuação de IA</div>
+        <table class="an-table">
+          <thead><tr><th>Empresa</th><th>Segmento</th><th>Score IA</th><th>Dor principal</th></tr></thead>
+          <tbody>
+            ${a.top_leads.map(l => `
+              <tr>
+                <td style="color:var(--cream);font-weight:500">${l.empresa}</td>
+                <td style="color:var(--muted)">${l.segmento||'—'}</td>
+                <td><span style="color:var(--gold);font-family:'DM Mono',monospace;font-size:13px">⚡ ${l.ai_score}/10</span></td>
+                <td style="color:var(--muted);font-size:11px">${l.pain_point||'—'}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>` : ''}
+    `;
+  } catch (e) {
+    el.innerHTML = `<div class="empty-state"><div class="es-icon">◌</div><p>Erro ao carregar analytics: ${e.message}</p></div>`;
+  }
 }
 
+// ══════════════════════════════════════
+// RENDER ALL
+// ══════════════════════════════════════
 function renderAll() {
   renderStats();
   renderPipeline('dashboard-pipeline');
@@ -1173,34 +1599,31 @@ function renderAll() {
 // EXPORT TO EXCEL
 // ══════════════════════════════════════
 function exportExcel() {
-  if (!clients.length) { alert('Nenhum cliente para exportar.'); return; }
+  if (!clients.length) { showToast('Nenhum cliente para exportar.', 'info'); return; }
 
   const wb = XLSX.utils.book_new();
   const statusLabel = { prospect:'Prospect', proposta:'Proposta enviada', fechado:'Fechado', entregue:'Entregue', cancelado:'Cancelado' };
   const pagLabel = { pago:'Pago ✅', parcial:'Parcial ⏳', pendente:'Pendente 🔴' };
 
-  // ── Aba 1: Clientes ──
   const clientRows = clients.map(c => ({
     'Nome':         c.nome,
     'Negócio':      c.negocio,
     'Segmento':     c.segmento || '',
     'WhatsApp':     c.whatsapp || '',
+    'CNPJ':         c.cnpj || '',
     'Pacote':       c.pacote || '',
     'Valor (R$)':   c.valor || 0,
     'Status':       statusLabel[c.status] || c.status,
     'Pagamento':    pagLabel[c.pagamento] || c.pagamento,
     'Prazo':        c.prazo ? new Date(c.prazo+'T12:00:00').toLocaleDateString('pt-BR') : '',
-    'Cadastrado':   new Date(c.criado).toLocaleDateString('pt-BR'),
+    'Cadastrado':   new Date(c.criado_em).toLocaleDateString('pt-BR'),
+    'Lead Hunter':  c.lead_hunter_origin ? 'Sim' : 'Não',
     'Observações':  c.obs || '',
   }));
   const wsClientes = XLSX.utils.json_to_sheet(clientRows);
-  wsClientes['!cols'] = [
-    {wch:20},{wch:22},{wch:20},{wch:18},{wch:30},{wch:12},
-    {wch:18},{wch:14},{wch:12},{wch:14},{wch:35}
-  ];
+  wsClientes['!cols'] = [{wch:20},{wch:22},{wch:20},{wch:18},{wch:18},{wch:30},{wch:12},{wch:18},{wch:14},{wch:12},{wch:14},{wch:12},{wch:35}];
   XLSX.utils.book_append_sheet(wb, wsClientes, 'Clientes');
 
-  // ── Aba 2: Pipeline ──
   const pipeRows = clients.map(c => ({
     'Etapa':      statusLabel[c.status] || c.status,
     'Cliente':    c.nome,
@@ -1208,12 +1631,12 @@ function exportExcel() {
     'Pacote':     (c.pacote||'').split('·')[0].trim(),
     'Valor (R$)': c.valor || 0,
     'Prazo':      c.prazo ? new Date(c.prazo+'T12:00:00').toLocaleDateString('pt-BR') : '',
+    'Reativar':   isStale(c) ? 'SIM' : '',
   }));
   const wsPipe = XLSX.utils.json_to_sheet(pipeRows);
-  wsPipe['!cols'] = [{wch:18},{wch:20},{wch:22},{wch:25},{wch:12},{wch:12}];
+  wsPipe['!cols'] = [{wch:18},{wch:20},{wch:22},{wch:25},{wch:12},{wch:12},{wch:10}];
   XLSX.utils.book_append_sheet(wb, wsPipe, 'Pipeline');
 
-  // ── Aba 3: Financeiro ──
   const pagos    = clients.filter(c => c.pagamento === 'pago' && c.valor);
   const pendentes = clients.filter(c => c.pagamento !== 'pago' && c.valor);
   const totalPago = pagos.reduce((s,c)=>s+c.valor,0);
@@ -1232,7 +1655,6 @@ function exportExcel() {
   wsFin['!cols'] = [{wch:16},{wch:20},{wch:22},{wch:14}];
   XLSX.utils.book_append_sheet(wb, wsFin, 'Financeiro');
 
-  // ── Aba 4: Histórico ──
   const histRows = [];
   clients.forEach(c => {
     (c.historico||[]).forEach(h => {
@@ -1247,12 +1669,13 @@ function exportExcel() {
 
   const date = new Date().toLocaleDateString('pt-BR').replace(/\//g,'-');
   XLSX.writeFile(wb, `Vertice-CRM-${date}.xlsx`);
+  showToast('Exportando Excel...');
 }
 
 // ══════════════════════════════════════
 // INIT
 // ══════════════════════════════════════
-renderAll();
+loadClients();
 </script>
 </body>
 </html>

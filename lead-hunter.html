@@ -111,6 +111,11 @@ main{display:flex;flex-direction:column}
 .ntit{font-weight:700;color:var(--gold);margin-bottom:3px;font-size:8px;letter-spacing:.2em;text-transform:uppercase}
 .errbox{background:rgba(192,57,43,.1);border:1px solid rgba(192,57,43,.35);border-radius:4px;padding:12px 15px;font-size:10px;color:#e05a4a;line-height:1.6;margin:16px 22px;display:none}
 .errbox.on{display:block}
+.bpsp{background:transparent;border:1px solid rgba(74,122,171,.35);border-radius:3px;color:#4a7aab;cursor:pointer;font-family:'Space Mono',monospace;font-size:7px;letter-spacing:.1em;padding:4px 7px;text-transform:uppercase;transition:all .2s;display:block;width:100%;margin-bottom:3px}
+.bpsp:hover{background:rgba(74,122,171,.1);color:#6a9acb}
+.bpsp:disabled{opacity:.4;cursor:default}
+.blog{background:transparent;border:1px solid rgba(201,168,76,.28);border-radius:3px;color:var(--gdim);cursor:pointer;font-family:'Space Mono',monospace;font-size:7px;letter-spacing:.1em;padding:4px 7px;text-transform:uppercase;transition:all .2s;display:block;width:100%}
+.blog:hover{background:rgba(201,168,76,.08);color:var(--gold)}
 ::-webkit-scrollbar{width:3px}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--bor);border-radius:2px}
@@ -318,17 +323,17 @@ function calcAIPriority(tags,ph,ws,sc){const osv=tags.shop||tags.amenity||tags.l
 
 function toDBPayload(l){return{nome:l.name,empresa:l.name,telefone:l.phone||null,email:null,linkedin:null,cnpj:null,status:'Novo',ai_priority:l.aiPriority||0,segmento:(l.tags.amenity||l.tags.shop||l.tags.leisure||l.tags.office||'outro').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()),endereco:l.address,score_vertice:l.score,lat:l.lat||null,lng:l.lng||null,website:l.website||null,osm_id:String(l.id)}}
 
-async function saveOneToDB(i){const l=leads[i];const btn=$('db'+i);if(!l||btn.disabled)return;btn.textContent='💾…';btn.disabled=true;try{const r=await fetch('/api/leads/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({leads:[toDBPayload(l)]})});const d=await r.json();if(d.saved>0){btn.textContent='🤖…';notify('Salvo ▲ Analisando com IA…',l.name+' salvo. Aguardando GPT...');checkDBStatus();if(d.saved_ids&&d.saved_ids[0]){await scoreLeadAI(d.saved_ids[0],l.name)}btn.textContent='✓ IA'}else if(d.skipped>0){btn.textContent='↩ DUP';notify('Já existe',l.name+' já está no banco.')}}catch(e){btn.disabled=false;btn.textContent='💾 DB';notify('Erro','Não foi possível conectar ao banco.')}}
+async function saveOneToDB(i){const l=leads[i];const btn=$('db'+i);if(!l||btn.disabled)return;btn.textContent='💾…';btn.disabled=true;try{const r=await fetch('/api/leads/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({leads:[toDBPayload(l)]})});const d=await r.json();if(d.saved>0){leads[i].dbId=d.saved_ids&&d.saved_ids[0];btn.textContent='🤖…';notify('Salvo ▲ Analisando com IA…',l.name+' salvo. Aguardando GPT...');checkDBStatus();if(d.saved_ids&&d.saved_ids[0]){await scoreLeadAI(d.saved_ids[0],l.name)}btn.textContent='✓ IA';render();}else if(d.skipped>0){btn.textContent='↩ DUP';notify('Já existe',l.name+' já está no banco.')}}catch(e){btn.disabled=false;btn.textContent='💾 DB';notify('Erro','Não foi possível conectar ao banco.')}}
 
 async function saveAllToDB(){if(!leads.length){notify('Sem leads','Faça uma busca primeiro.');return}notify('Salvando…','Enviando leads ao PostgreSQL...');try{const r=await fetch('/api/leads/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({leads:leads.map(toDBPayload)})});const d=await r.json();notify('PostgreSQL ▲',d.message);leads.forEach((_,i)=>{const b=$('db'+i);if(b){b.textContent='✓ DB';b.disabled=true}});checkDBStatus();}catch(e){notify('Erro','Falha ao conectar ao banco de dados.')}}
 
 async function checkDBStatus(){try{const r=await fetch('/api/stats');if(r.ok){const d=await r.json();$('db-count').textContent=d.total_leads;$('db-dot').style.background='var(--green)';$('db-dot').style.boxShadow='0 0 6px var(--green)'}}catch(e){$('db-dot').style.background='var(--dim)';$('db-count').textContent='offline'}}
 
-function render(){const ns=leads.filter(l=>!l.website).length,np=leads.filter(l=>!l.phone).length,hot=leads.filter(l=>l.score>=65).length;$('st').textContent=leads.length;$('sns').textContent=ns;$('snp').textContent=np;$('shot').textContent=hot;if(!leads.length){$('list').innerHTML='<div class="empty"><div class="etri">▲</div><div class="etit">Nenhum lead qualificado</div><div class="esub">Ajuste filtros ou aumente o raio</div></div>';return}$('list').innerHTML=leads.map((l,i)=>{const cls=sc(l.score),tgs=getTags(l),murl=l.lat?`https://www.openstreetmap.org/?mlat=${l.lat}&mlon=${l.lng}#map=18/${l.lat}/${l.lng}`:null,tipo=(l.tags.amenity||l.tags.shop||l.tags.leisure||l.tags.office||'').replace(/_/g,' '),ai=l.aiPriority||0,aiCol=ai>=8?'#25d366':ai>=5?'var(--gold)':'var(--dim)';return`<div class="lrow" id="row${i}"><div><div class="lname">${l.name}</div>${tipo?`<div class="ltype">${tipo}</div>`:''}</div><div><div class="ladr">${l.address}</div>${l.diasUpdate!==undefined?`<div class="ltype">att. há ${l.diasUpdate}d</div>`:''} ${murl?`<a class="lmap" href="${murl}" target="_blank">↗ ver no mapa</a>`:''}</div><div><div class="swrap ${cls}"><div class="strk"><div class="sfil" style="width:${l.score}%"></div></div><span class="snum">${l.score}</span></div><div style="font-size:7px;margin-top:4px;color:${aiCol};letter-spacing:.05em">⚡ AI: ${ai}/10</div></div><div class="tags">${tgs.map(t=>`<span class="tag ${t.c}">${t.l}</span>`).join('')}</div><div>${l.phone?`<a class="plink" href="tel:${l.phone}">${l.phone}</a>`:`<span style="font-size:9px;color:var(--dim)">—</span>`}</div><div><button class="bcrm" id="b${i}" onclick="send(${i})">⟶ CRM</button><button class="bcrm" id="db${i}" onclick="saveOneToDB(${i})" style="border-color:rgba(37,211,102,.25);color:var(--green)">💾 DB</button><a class="bview" href="./index.html">↗ ver crm</a></div></div>`}).join('')}
+function render(){const ns=leads.filter(l=>!l.website).length,np=leads.filter(l=>!l.phone).length,hot=leads.filter(l=>l.score>=65).length;$('st').textContent=leads.length;$('sns').textContent=ns;$('snp').textContent=np;$('shot').textContent=hot;if(!leads.length){$('list').innerHTML='<div class="empty"><div class="etri">▲</div><div class="etit">Nenhum lead qualificado</div><div class="esub">Ajuste filtros ou aumente o raio</div></div>';return}$('list').innerHTML=leads.map((l,i)=>{const cls=sc(l.score),tgs=getTags(l),murl=l.lat?`https://www.openstreetmap.org/?mlat=${l.lat}&mlon=${l.lng}#map=18/${l.lat}/${l.lng}`:null,tipo=(l.tags.amenity||l.tags.shop||l.tags.leisure||l.tags.office||'').replace(/_/g,' '),ai=l.aiPriority||0,aiCol=ai>=8?'#25d366':ai>=5?'var(--gold)':'var(--dim)';const psBtn=l.website?`<button class="bpsp" id="ps${i}" onclick="auditPageSpeed('${l.website.replace(/'/g,"\\'")}',${i})" title="Auditar velocidade mobile do site">${l.pscore!==undefined?`📱 ${l.pscore}%`:'📱 SITE'}</button>`:'';const logBtn=l.dbId?`<button class="blog" onclick="openContatoLogLH('${l.dbId}','${l.name.replace(/'/g,"\\'")}')">📞 LOG</button>`:'';return`<div class="lrow" id="row${i}"><div><div class="lname">${l.name}</div>${tipo?`<div class="ltype">${tipo}</div>`:''}</div><div><div class="ladr">${l.address}</div>${l.diasUpdate!==undefined?`<div class="ltype">att. há ${l.diasUpdate}d</div>`:''} ${murl?`<a class="lmap" href="${murl}" target="_blank">↗ ver no mapa</a>`:''}</div><div><div class="swrap ${cls}"><div class="strk"><div class="sfil" style="width:${l.score}%"></div></div><span class="snum">${l.score}</span></div><div style="font-size:7px;margin-top:4px;color:${aiCol};letter-spacing:.05em">⚡ AI: ${ai}/10</div></div><div class="tags">${tgs.map(t=>`<span class="tag ${t.c}">${t.l}</span>`).join('')}</div><div>${l.phone?`<a class="plink" href="tel:${l.phone}">${l.phone}</a>`:`<span style="font-size:9px;color:var(--dim)">—</span>`}</div><div>${psBtn}<button class="bcrm" id="b${i}" onclick="send(${i})">⟶ CRM</button><button class="bcrm" id="db${i}" onclick="saveOneToDB(${i})" style="border-color:rgba(37,211,102,.25);color:var(--green)">💾 DB</button>${logBtn}<a class="bview" href="./index.html">↗ VER CRM</a></div></div>`}).join('')}
 
 function makeCRMClient(l,i){const tl=getTags(l).map(t=>t.l).join(', '),tipo=(l.tags.amenity||l.tags.shop||l.tags.leisure||l.tags.office||'').replace(/_/g,' '),murl=l.lat?`https://www.openstreetmap.org/?mlat=${l.lat}&mlon=${l.lng}#map=18/${l.lat}/${l.lng}`:'',obs=[`🤖 Lead capturado via Lead Hunter · OpenStreetMap`,`📍 ${l.address}`,`📊 Score Vértice: ${l.score}/100`,`🏷️ ${tl}`,tipo?`🏢 Tipo: ${tipo}`:'',l.website?`🌐 ${l.website}`:`❌ Sem site`,l.phone?`📞 ${l.phone}`:`❌ Sem telefone`,murl?`🗺️ ${murl}`:'',`📅 Capturado: ${new Date().toLocaleString('pt-BR')}`].filter(Boolean).join('\n');return{id:Date.now()+i,nome:l.name,negocio:l.name,whatsapp:l.phone||'',segmento:seg(l.tags),pacote:'',valor:0,status:'prospect',pagamento:'pendente',prazo:'',obs,criado:new Date().toISOString(),historico:[{texto:'Lead capturado via Lead Hunter · OpenStreetMap',data:new Date().toLocaleDateString('pt-BR')},{texto:`Score: ${l.score}/100 — ${tl}`,data:new Date().toLocaleDateString('pt-BR')}]}}
 
-function send(i){const l=leads[i],btn=$('b'+i);if(!l||btn.disabled)return;const crm=JSON.parse(localStorage.getItem('vertice-crm')||'[]');if(crm.some(c=>c.nome===l.name)){notify('Já existe ▲',l.name+' já está no CRM.');btn.textContent='✓ JÁ EXISTE';btn.classList.add('sent');btn.disabled=true;return}crm.push(makeCRMClient(l,i));localStorage.setItem('vertice-crm',JSON.stringify(crm));btn.textContent='✓ ENVIADO';btn.classList.add('sent');btn.disabled=true;notify('Lead enviado ▲',l.name+' → CRM como Prospect.')}
+async function send(i){const l=leads[i],btn=$('b'+i);if(!l||btn.disabled)return;btn.textContent='⏳';btn.disabled=true;const tl=getTags(l).map(t=>t.l).join(', '),tipo=(l.tags.amenity||l.tags.shop||l.tags.leisure||l.tags.office||'').replace(/_/g,' '),murl=l.lat?`https://www.openstreetmap.org/?mlat=${l.lat}&mlon=${l.lng}#map=18/${l.lat}/${l.lng}`:'',obs=[`Lead capturado via Lead Hunter · OpenStreetMap`,`Endereço: ${l.address}`,`Score Vértice: ${l.score}/100`,`Tags: ${tl}`,tipo?`Tipo: ${tipo}`:'',l.website?`Site: ${l.website}`:`Sem site`,l.phone?`Tel: ${l.phone}`:`Sem telefone`,murl?`Mapa: ${murl}`:'',`Capturado: ${new Date().toLocaleString('pt-BR')}`].filter(Boolean).join('\n');const payload={nome:l.name,negocio:l.name,whatsapp:l.phone||null,segmento:seg(l.tags),status:'prospect',pagamento:'pendente',obs,lead_hunter_origin:true,lead_db_id:l.dbId||null,historico:[{texto:'Lead capturado via Lead Hunter · OpenStreetMap',data:new Date().toLocaleDateString('pt-BR')},{texto:`Score: ${l.score}/100 — ${tl}`,data:new Date().toLocaleDateString('pt-BR')}]};try{const r=await fetch('/api/clientes',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});if(!r.ok){const e=await r.json();throw new Error(e.detail||'Erro')}btn.textContent='✓ ENVIADO';btn.classList.add('sent');notify('Lead enviado ▲',l.name+' → CRM como Prospect.');}catch(e){btn.disabled=false;btn.textContent='⟶ CRM';notify('Erro',e.message.substring(0,80));}}
 
 function sendAll(){if(!leads.length){notify('Sem leads','Faça uma busca primeiro.');return}let n=0;leads.forEach((_,i)=>{const b=$('b'+i);if(b&&!b.disabled){send(i);n++}});notify('CRM atualizado ▲',n+' leads enviados. Clique em ↗ VER CRM.')}
 
@@ -386,6 +391,55 @@ async function scoreBatchDB(){
   finally{btn.textContent='🤖 ANALISAR LEADS NO BANCO';btn.disabled=false}
 }
 
+// ── PAGESPEED AUDIT ──────────────────────────────────────────
+async function auditPageSpeed(url, i){
+  const btn=$('ps'+i);
+  if(!btn)return;
+  btn.textContent='📱…';btn.disabled=true;
+  try{
+    const apiUrl=`https://www.googleapis.com/pagespeedonline/v5/runPagespeed?url=${encodeURIComponent(url)}&strategy=mobile`;
+    const r=await fetch(apiUrl);
+    if(!r.ok)throw new Error('PageSpeed HTTP '+r.status);
+    const d=await r.json();
+    const score=Math.round((d.lighthouseResult?.categories?.performance?.score||0)*100);
+    leads[i].pscore=score;
+    const col=score>=80?'#25d366':score>=50?'var(--gold)':'#e05a4a';
+    btn.innerHTML=`<span style="color:${col}">📱 ${score}%</span>`;
+    btn.disabled=false;
+    const msg=score>=80?'Site rápido — bom para o usuário':score>=50?'Desempenho médio':'Site lento — pitch perfeito!';
+    notify('PageSpeed: '+score+'%', url+' — '+msg);
+  }catch(e){
+    btn.textContent='📱 SITE';btn.disabled=false;
+    notify('PageSpeed','Não foi possível auditar: '+e.message.substring(0,60));
+  }
+}
+
+// ── CONTATO LOG (Lead Hunter) ─────────────────────────────────
+let _lhLogId=null;
+function openContatoLogLH(leadId, nomeEmpresa){
+  _lhLogId=leadId;
+  $('lh-log-empresa').textContent=nomeEmpresa||leadId;
+  $('lh-log-canal').selectedIndex=0;
+  $('lh-log-resultado').selectedIndex=0;
+  $('lh-log-obs').value='';
+  $('lh-log-modal').style.display='flex';
+}
+function closeLHLog(){$('lh-log-modal').style.display='none';_lhLogId=null}
+async function saveLHLog(){
+  if(!_lhLogId)return;
+  const canal=$('lh-log-canal').value;
+  const resultado=$('lh-log-resultado').value;
+  const observacao=$('lh-log-obs').value.trim()||null;
+  try{
+    const r=await fetch(`/api/leads/${_lhLogId}/contatos`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({lead_id:_lhLogId,canal,resultado,observacao})});
+    if(!r.ok){const e=await r.json();throw new Error(e.detail||'Erro')}
+    closeLHLog();
+    notify('Contato registrado ▲','Canal: '+canal+' · '+resultado);
+  }catch(e){
+    notify('Erro',e.message.substring(0,80));
+  }
+}
+
 </script>
 
 <div id="ai-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.82);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:24px" onclick="if(event.target===this)closeAIModal()">
@@ -421,6 +475,47 @@ async function scoreBatchDB(){
       <button onclick="closeAIModal()" style="flex:1;background:none;border:1px solid var(--bor);color:var(--dim);border-radius:4px;padding:10px;font-size:8px;letter-spacing:.15em;cursor:pointer;text-transform:uppercase;font-family:'Space Mono',monospace">
         Fechar
       </button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: CONTATO LOG LH -->
+<div id="lh-log-modal" style="display:none;position:fixed;inset:0;z-index:9998;background:rgba(0,0,0,.82);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:24px" onclick="if(event.target===this)closeLHLog()">
+  <div style="background:#14140f;border:1px solid rgba(201,168,76,.28);border-radius:8px;max-width:420px;width:100%;padding:28px 32px">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+      <div>
+        <div style="font-size:8px;letter-spacing:.25em;color:var(--gold);text-transform:uppercase;margin-bottom:4px">📞 Registrar Contato</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:300" id="lh-log-empresa"></div>
+      </div>
+      <button onclick="closeLHLog()" style="background:none;border:none;color:var(--dim);font-size:18px;cursor:pointer;padding:4px 8px">✕</button>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div>
+        <label style="font-size:8px;color:var(--dim);letter-spacing:.15em;text-transform:uppercase;display:block;margin-bottom:5px">Canal de contato</label>
+        <select id="lh-log-canal" style="background:#1a1a14;border:1px solid rgba(201,168,76,.2);border-radius:3px;color:#e8e0d0;font-family:'Space Mono',monospace;font-size:11px;padding:8px 10px;width:100%;outline:none">
+          <option value="whatsapp">WhatsApp</option>
+          <option value="ligacao">Ligação</option>
+          <option value="email">E-mail</option>
+          <option value="outro">Outro</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:8px;color:var(--dim);letter-spacing:.15em;text-transform:uppercase;display:block;margin-bottom:5px">Resultado</label>
+        <select id="lh-log-resultado" style="background:#1a1a14;border:1px solid rgba(201,168,76,.2);border-radius:3px;color:#e8e0d0;font-family:'Space Mono',monospace;font-size:11px;padding:8px 10px;width:100%;outline:none">
+          <option value="sem_resposta">Sem resposta</option>
+          <option value="interesse">Interesse demonstrado</option>
+          <option value="sem_interesse">Sem interesse</option>
+          <option value="agendado">Reunião agendada</option>
+        </select>
+      </div>
+      <div>
+        <label style="font-size:8px;color:var(--dim);letter-spacing:.15em;text-transform:uppercase;display:block;margin-bottom:5px">Observação (opcional)</label>
+        <textarea id="lh-log-obs" placeholder="Detalhes do contato..." rows="3" style="background:#1a1a14;border:1px solid rgba(201,168,76,.2);border-radius:3px;color:#e8e0d0;font-family:'Space Mono',monospace;font-size:11px;padding:8px 10px;width:100%;outline:none;resize:vertical"></textarea>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:20px">
+      <button onclick="saveLHLog()" style="flex:1;background:linear-gradient(135deg,#c9a84c,#8a6520);border:none;border-radius:3px;color:#0a0a08;cursor:pointer;font-family:'Space Mono',monospace;font-size:9px;font-weight:700;letter-spacing:.15em;padding:11px;text-transform:uppercase">SALVAR CONTATO</button>
+      <button onclick="closeLHLog()" style="background:none;border:1px solid rgba(201,168,76,.2);border-radius:3px;color:var(--dim);cursor:pointer;font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.1em;padding:11px 16px;text-transform:uppercase">Cancelar</button>
     </div>
   </div>
 </div>
