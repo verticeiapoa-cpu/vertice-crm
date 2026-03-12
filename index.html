@@ -420,6 +420,14 @@ body{font-family:'DM Sans',sans-serif;background:var(--noir);color:var(--cream);
     <span class="nav-icon">◉</span> Clientes
   </div>
 
+  <div class="nav-section">Prospecção</div>
+  <a href="./lead-hunter.html" style="text-decoration:none">
+    <div class="nav-item" style="color:var(--gold-d);border-color:rgba(201,169,110,0.15)">
+      <span class="nav-icon">▲</span> Lead Hunter
+      <span style="margin-left:auto;font-size:8px;letter-spacing:.1em;color:var(--green-l);font-family:'DM Mono',monospace">FREE</span>
+    </div>
+  </a>
+
   <div class="nav-section">Financeiro</div>
   <div class="nav-item" onclick="showView('financeiro')">
     <span class="nav-icon">◇</span> Financeiro
@@ -916,18 +924,26 @@ function renderPipeline(containerId) {
 
   container.innerHTML = cols.map(col => {
     const items = clients.filter(c => c.status === col.key);
-    const cards = items.length ? items.map(c => `
+    const cards = items.length ? items.map(c => {
+      const isLead = (c.historico||[]).some(h => h.texto && h.texto.includes('Lead Hunter'));
+      return `
       <div class="kanban-card" onclick="openDetail(${c.id})">
         <div class="kc-bar ${col.key}"></div>
-        <div class="kc-name">${c.nome}</div>
-        <div class="kc-biz">${c.negocio}${c.segmento ? ' · ' + c.segmento : ''}</div>
-        <div class="kc-footer">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:4px">
+          <div>
+            <div class="kc-name">${c.nome}</div>
+            <div class="kc-biz">${c.negocio}${c.segmento ? ' · ' + c.segmento : ''}</div>
+          </div>
+          ${isLead ? `<span style="flex-shrink:0;font-size:7px;letter-spacing:.1em;background:rgba(201,169,110,0.12);border:1px solid rgba(201,169,110,0.3);color:var(--gold-d);padding:2px 5px;border-radius:2px;font-family:'DM Mono',monospace;margin-top:1px">▲ LEAD</span>` : ''}
+        </div>
+        <div class="kc-footer" style="margin-top:8px">
           <span class="kc-pkg">${(c.pacote||'').split('·')[0].trim().substring(0,18)}</span>
           <span class="kc-value">${c.valor ? 'R$'+c.valor.toLocaleString('pt-BR') : 'Consulta'}</span>
         </div>
         ${c.prazo ? `<div class="kc-date" style="margin-top:6px">📅 ${new Date(c.prazo+'T12:00:00').toLocaleDateString('pt-BR')}</div>` : ''}
+        ${c.whatsapp ? `<button onclick="event.stopPropagation();openWhatsApp(${c.id})" style="margin-top:8px;width:100%;background:rgba(37,211,102,0.08);border:1px solid rgba(37,211,102,0.25);border-radius:2px;color:#25d366;cursor:pointer;font-family:'DM Mono',monospace;font-size:9px;letter-spacing:.1em;padding:5px;text-transform:uppercase;transition:all .2s" onmouseover="this.style.background='rgba(37,211,102,0.18)'" onmouseout="this.style.background='rgba(37,211,102,0.08)'">● WhatsApp</button>` : ''}
       </div>
-    `).join('') : `<div class="empty-state" style="padding:30px 10px"><div class="es-icon" style="font-size:24px">◌</div><p style="font-size:12px">Nenhum</p></div>`;
+    `}).join('') : `<div class="empty-state" style="padding:30px 10px"><div class="es-icon" style="font-size:24px">◌</div><p style="font-size:12px">Nenhum</p></div>`;
 
     return `<div class="pipe-col ${col.cls}">
       <div class="pipe-header">
