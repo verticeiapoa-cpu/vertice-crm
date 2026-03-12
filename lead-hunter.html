@@ -226,6 +226,21 @@ main{display:flex;flex-direction:column}
       💾 SALVAR TODOS NO BANCO
     </button>
   </div>
+
+  <div style="height:1px;background:var(--bor);margin:4px 0"></div>
+
+  <div style="background:var(--sur2);border:1px solid rgba(201,168,76,0.18);border-radius:4px;padding:10px 12px">
+    <div style="font-size:8px;letter-spacing:.2em;color:var(--gold);text-transform:uppercase;margin-bottom:6px">
+      ⚡ AI Lead Scoring
+    </div>
+    <div style="font-size:9px;color:var(--dim);margin-bottom:8px;line-height:1.5">
+      Analisa fit, dor e pitch<br>via GPT para cada lead.
+    </div>
+    <button class="btn-out" onclick="scoreBatchDB()" style="margin-top:0;font-size:8px;border-color:rgba(201,168,76,.3);color:var(--gold)">
+      🤖 ANALISAR LEADS NO BANCO
+    </button>
+    <div id="ai-batch-status" style="font-size:8px;color:var(--dim);margin-top:6px;line-height:1.4;display:none"></div>
+  </div>
 </aside>
 
 <main>
@@ -303,7 +318,7 @@ function calcAIPriority(tags,ph,ws,sc){const osv=tags.shop||tags.amenity||tags.l
 
 function toDBPayload(l){return{nome:l.name,empresa:l.name,telefone:l.phone||null,email:null,linkedin:null,cnpj:null,status:'Novo',ai_priority:l.aiPriority||0,segmento:(l.tags.amenity||l.tags.shop||l.tags.leisure||l.tags.office||'outro').replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()),endereco:l.address,score_vertice:l.score,lat:l.lat||null,lng:l.lng||null,website:l.website||null,osm_id:String(l.id)}}
 
-async function saveOneToDB(i){const l=leads[i];const btn=$('db'+i);if(!l||btn.disabled)return;btn.textContent='…';btn.disabled=true;try{const r=await fetch('/api/leads/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({leads:[toDBPayload(l)]})});const d=await r.json();if(d.saved>0){btn.textContent='✓ DB';notify('Salvo no banco ▲',l.name+' salvo no PostgreSQL.')}else if(d.skipped>0){btn.textContent='↩ JÁ EXISTE';notify('Já existe',l.name+' já está no banco.')}checkDBStatus();}catch(e){btn.disabled=false;btn.textContent='💾 DB';notify('Erro','Não foi possível conectar ao banco.')}}
+async function saveOneToDB(i){const l=leads[i];const btn=$('db'+i);if(!l||btn.disabled)return;btn.textContent='💾…';btn.disabled=true;try{const r=await fetch('/api/leads/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({leads:[toDBPayload(l)]})});const d=await r.json();if(d.saved>0){btn.textContent='🤖…';notify('Salvo ▲ Analisando com IA…',l.name+' salvo. Aguardando GPT...');checkDBStatus();if(d.saved_ids&&d.saved_ids[0]){await scoreLeadAI(d.saved_ids[0],l.name)}btn.textContent='✓ IA'}else if(d.skipped>0){btn.textContent='↩ DUP';notify('Já existe',l.name+' já está no banco.')}}catch(e){btn.disabled=false;btn.textContent='💾 DB';notify('Erro','Não foi possível conectar ao banco.')}}
 
 async function saveAllToDB(){if(!leads.length){notify('Sem leads','Faça uma busca primeiro.');return}notify('Salvando…','Enviando leads ao PostgreSQL...');try{const r=await fetch('/api/leads/import',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({leads:leads.map(toDBPayload)})});const d=await r.json();notify('PostgreSQL ▲',d.message);leads.forEach((_,i)=>{const b=$('db'+i);if(b){b.textContent='✓ DB';b.disabled=true}});checkDBStatus();}catch(e){notify('Erro','Falha ao conectar ao banco de dados.')}}
 
@@ -324,6 +339,91 @@ function clr(){leads=[];render()}
 function exportCSV(){if(!leads.length){notify('Sem dados','Faça uma busca primeiro.');return}const h=['Nome','Endereço','Telefone','Website','Score','Tags','OSM ID','Lat','Lng'],rows=leads.map(l=>[`"${l.name}"`,`"${l.address}"`,`"${l.phone||''}"`,`"${l.website||''}"`,l.score,`"${getTags(l).map(t=>t.l).join('; ')}"`,l.id,l.lat||'',l.lng||'']);const csv=[h,...rows].map(r=>r.join(',')).join('\n'),a=document.createElement('a');a.href=URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'}));a.download=`vertice-leads-${new Date().toISOString().slice(0,10)}.csv`;a.click();notify('CSV exportado',leads.length+' leads.')}
 
 window.onload=()=>{leads=[{id:1,name:'Barbearia Dom Pedro',tags:{shop:'barber'},address:'Av. João Pessoa, 412 - Centro',phone:null,website:null,lat:-30.034,lng:-51.217},{id:2,name:'Restaurante do Seu Jorge',tags:{amenity:'restaurant'},address:'R. da Conceição, 88 - Cidade Baixa',phone:'(51)99812-3456',website:null,lat:-30.041,lng:-51.220},{id:3,name:'Salão Bella Arte',tags:{shop:'hairdresser'},address:'R. Ramiro Barcelos, 1200 - Floresta',phone:null,website:null,lat:-30.028,lng:-51.215},{id:4,name:'Oficina Mota & Filhos',tags:{shop:'car_repair'},address:'Av. Carlos Gomes, 300 - Auxiliadora',phone:'(51)3333-4444',website:null,lat:-30.022,lng:-51.211},{id:5,name:'Padaria Pão Quente',tags:{shop:'bakery'},address:'R. Garibaldi, 55 - Rio Branco',phone:null,website:null,lat:-30.019,lng:-51.209},{id:6,name:'Clínica Sorrir Odonto',tags:{amenity:'dentist'},address:'Av. Independência, 770',phone:'(51)98765-0000',website:null,lat:-30.025,lng:-51.205}];leads.forEach(l=>{l.score=score(l.tags);l.aiPriority=calcAIPriority(l.tags,l.phone,l.website,l.score)});leads=leads.filter(l=>l.score>=30).sort((a,b)=>b.score-a.score);render();checkDBStatus()};
+
+async function scoreLeadAI(leadId, nomeEmpresa){
+  notify('🤖 Analisando…', nomeEmpresa+' — aguarde o GPT...');
+  try{
+    const r=await fetch(`/api/leads/${leadId}/score`,{method:'POST'});
+    if(!r.ok){const e=await r.json();throw new Error(e.detail||'Erro')}
+    const d=await r.json();
+    showAIModal(d);
+  }catch(e){
+    notify('Erro na IA', e.message.substring(0,80));
+  }
+}
+
+function showAIModal(d){
+  const sc=d.ai_score,col=sc>=8?'#25d366':sc>=6?'var(--gold)':'var(--dim)';
+  $('ai-modal-empresa').textContent=d.empresa;
+  $('ai-modal-score').textContent=sc+'/10';
+  $('ai-modal-score').style.color=col;
+  const stars='█'.repeat(sc)+'░'.repeat(10-sc);
+  $('ai-modal-bar').textContent=stars;
+  $('ai-modal-bar').style.color=col;
+  $('ai-modal-pain').textContent=d.pain_point;
+  $('ai-modal-pitch').textContent=d.pitch_hook;
+  const wp=d.pitch_hook?encodeURIComponent(d.pitch_hook):'';
+  $('ai-modal-wp').href=`https://wa.me/?text=${wp}`;
+  $('ai-modal').style.display='flex';
+}
+
+function closeAIModal(){$('ai-modal').style.display='none'}
+
+async function scoreBatchDB(){
+  const btn=document.querySelector('[onclick="scoreBatchDB()"]');
+  const status=$('ai-batch-status');
+  btn.textContent='⏳ Analisando...';btn.disabled=true;status.style.display='block';
+  status.textContent='Enviando para o GPT...';
+  try{
+    const r=await fetch('/api/leads/score-batch',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({limit:10})});
+    const d=await r.json();
+    if(d.pontuados===0){status.textContent='Todos os leads já foram analisados.'}
+    else{status.textContent=`✓ ${d.pontuados} leads analisados pela IA!`}
+    if(d.resultados&&d.resultados.length){
+      showAIModal(d.resultados[0]);
+    }
+  }catch(e){status.textContent='Erro: '+e.message}
+  finally{btn.textContent='🤖 ANALISAR LEADS NO BANCO';btn.disabled=false}
+}
+
 </script>
+
+<div id="ai-modal" style="display:none;position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.82);backdrop-filter:blur(8px);align-items:center;justify-content:center;padding:24px" onclick="if(event.target===this)closeAIModal()">
+  <div style="background:#14140f;border:1px solid var(--borg);border-radius:8px;max-width:520px;width:100%;padding:28px 32px;box-shadow:0 0 60px rgba(201,168,76,.12)">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px">
+      <div>
+        <div style="font-size:8px;letter-spacing:.25em;color:var(--gold);text-transform:uppercase;margin-bottom:4px">⚡ AI Lead Scoring — GPT</div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:22px;font-weight:300;letter-spacing:.05em" id="ai-modal-empresa"></div>
+      </div>
+      <button onclick="closeAIModal()" style="background:none;border:none;color:var(--dim);font-size:18px;cursor:pointer;padding:4px 8px;line-height:1">✕</button>
+    </div>
+
+    <div style="display:flex;align-items:baseline;gap:12px;margin-bottom:8px">
+      <span style="font-size:36px;font-weight:700;font-family:'Space Mono',monospace" id="ai-modal-score">—</span>
+      <span style="font-size:9px;color:var(--dim);letter-spacing:.1em">FIT SCORE</span>
+    </div>
+    <div style="font-size:11px;letter-spacing:.05em;margin-bottom:24px;font-family:'Space Mono',monospace;opacity:.7" id="ai-modal-bar"></div>
+
+    <div style="margin-bottom:20px">
+      <div style="font-size:7px;letter-spacing:.2em;color:var(--dim);text-transform:uppercase;margin-bottom:8px">🎯 Dor Principal Identificada</div>
+      <div style="background:rgba(192,57,43,.08);border:1px solid rgba(192,57,43,.2);border-radius:4px;padding:12px 14px;font-size:12px;line-height:1.6;color:#e8d5b0" id="ai-modal-pain"></div>
+    </div>
+
+    <div style="margin-bottom:24px">
+      <div style="font-size:7px;letter-spacing:.2em;color:var(--dim);text-transform:uppercase;margin-bottom:8px">💬 Pitch de Abertura — WhatsApp</div>
+      <div style="background:rgba(37,211,102,.06);border:1px solid rgba(37,211,102,.2);border-radius:4px;padding:14px 16px;font-size:12px;line-height:1.7;color:#e8d5b0;font-style:italic" id="ai-modal-pitch"></div>
+    </div>
+
+    <div style="display:flex;gap:10px">
+      <a id="ai-modal-wp" href="#" target="_blank" style="flex:1;background:rgba(37,211,102,.1);border:1px solid rgba(37,211,102,.3);color:var(--green);border-radius:4px;padding:10px;text-align:center;font-size:8px;letter-spacing:.15em;text-decoration:none;text-transform:uppercase">
+        📲 Abrir no WhatsApp
+      </a>
+      <button onclick="closeAIModal()" style="flex:1;background:none;border:1px solid var(--bor);color:var(--dim);border-radius:4px;padding:10px;font-size:8px;letter-spacing:.15em;cursor:pointer;text-transform:uppercase;font-family:'Space Mono',monospace">
+        Fechar
+      </button>
+    </div>
+  </div>
+</div>
+
 </body>
 </html>

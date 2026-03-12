@@ -26,3 +26,8 @@ class Lead(Base):
     osm_id = Column(String(50), nullable=True, unique=True)
     criado_em = Column(DateTime, default=datetime.utcnow, nullable=False)
     atualizado_em = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    ai_score = Column(Integer, nullable=True)
+    pain_point = Column(Text, nullable=True)
+    pitch_hook = Column(Text, nullable=True)
+    ai_scored_em = Column(DateTime, nullable=True)

@@ -29,11 +29,25 @@ api/
 | GET | `/api/health` | Status do servidor |
 | GET | `/api/stats` | Estatísticas dos leads no banco |
 | POST | `/api/leads/hunt` | Busca leads via OSM (termo livre: "Academia em SP") |
-| POST | `/api/leads/import` | Importa leads para PostgreSQL (dedup por osm_id/email/cnpj) |
-| GET | `/api/leads` | Lista leads com filtros (status, segmento, min_priority) |
+| POST | `/api/leads/import` | Importa leads para PostgreSQL (dedup por osm_id/email/cnpj); retorna `saved_ids` |
+| GET | `/api/leads` | Lista leads com filtros (status, segmento, min_priority, scored_only) |
 | GET | `/api/leads/{id}` | Detalhe de um lead |
 | PUT | `/api/leads/{id}/status` | Atualiza status do lead |
 | DELETE | `/api/leads/{id}` | Remove lead |
+| **POST** | **`/api/leads/{id}/score`** | **Analisa lead com GPT-5-mini → ai_score, pain_point, pitch_hook** |
+| **POST** | **`/api/leads/score-batch`** | **Analisa múltiplos leads com IA (até 50 por vez)** |
+
+## AI Lead Scoring (GPT-5-mini via Replit AI Integrations)
+Arquivo: `api/ai_scoring.py`
+
+Analisa cada lead e retorna um JSON com:
+- **ai_score** (0-10): fit para a Vértice Agência Digital
+- **pain_point**: dor principal identificada em 1 frase (pt-BR)
+- **pitch_hook**: frase de abertura personalizada para WhatsApp (pt-BR)
+
+**Fluxo automático:** ao clicar "💾 DB" no Lead Hunter, o lead é salvo e imediatamente analisado pela IA. O modal de resultado abre com o pitch pronto.
+
+**Fluxo manual:** botão "🤖 ANALISAR LEADS NO BANCO" analisa os próximos 10 leads sem ai_score.
 
 ## Modelo de Lead (PostgreSQL)
 - `id` — UUID primary key

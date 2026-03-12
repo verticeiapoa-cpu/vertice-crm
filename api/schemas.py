@@ -45,8 +45,21 @@ class LeadCreate(LeadBase):
 class LeadResponse(LeadBase):
     id: uuid.UUID
     criado_em: datetime
+    ai_score: Optional[int] = None
+    pain_point: Optional[str] = None
+    pitch_hook: Optional[str] = None
+    ai_scored_em: Optional[datetime] = None
 
     model_config = {"from_attributes": True}
+
+
+class AIScoreResponse(BaseModel):
+    id: uuid.UUID
+    empresa: str
+    ai_score: int
+    pain_point: str
+    pitch_hook: str
+    ai_scored_em: datetime
 
 
 class HuntRequest(BaseModel):
@@ -80,3 +93,12 @@ class ImportResponse(BaseModel):
     skipped: int
     errors: List[str]
     message: str
+    saved_ids: List[str] = []
+
+
+class BatchScoreRequest(BaseModel):
+    lead_ids: Optional[List[str]] = Field(
+        None,
+        description="IDs dos leads a pontuar. Se vazio, pontua todos sem ai_score."
+    )
+    limit: int = Field(10, ge=1, le=50, description="Máximo de leads a pontuar por chamada")
