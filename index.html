@@ -478,6 +478,59 @@ body{font-family:'DM Sans',sans-serif;background:var(--noir);color:var(--cream);
       </div>
     </div>
 
+    <!-- LEAD HUNTER BANNER -->
+    <div id="lh-banner" style="
+      background:linear-gradient(135deg,#0d0d0a 0%,#1a1a10 60%,#1f1a08 100%);
+      border:1px solid rgba(201,169,110,0.22);
+      border-radius:4px;
+      padding:20px 24px;
+      margin-bottom:24px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:20px;
+      position:relative;
+      overflow:hidden;
+    ">
+      <div style="position:absolute;inset:0;background:url('data:image/svg+xml,%3Csvg viewBox=\'0 0 200 200\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cfilter id=\'n\'%3E%3CfeTurbulence type=\'fractalNoise\' baseFrequency=\'0.9\' numOctaves=\'4\' stitchTiles=\'stitch\'/%3E%3C/filter%3E%3Crect width=\'100%25\' height=\'100%25\' filter=\'url(%23n)\' opacity=\'0.04\'/%3E%3C/svg%3E');pointer-events:none;opacity:.3;"></div>
+      <div style="position:absolute;right:-20px;top:-20px;font-size:120px;opacity:0.03;font-family:'Cormorant Garamond',serif;line-height:1;pointer-events:none">▲</div>
+      <div style="display:flex;align-items:center;gap:16px;flex:1;min-width:0">
+        <div style="width:42px;height:42px;border:1px solid rgba(201,169,110,0.3);border-radius:3px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:rgba(201,169,110,0.06)">
+          <span style="font-size:20px;color:var(--gold-d)">▲</span>
+        </div>
+        <div>
+          <div style="font-family:'DM Mono',monospace;font-size:9px;letter-spacing:2px;color:var(--gold-d);text-transform:uppercase;margin-bottom:3px">Prospecção · OSM Free Engine</div>
+          <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-weight:400;color:var(--cream)">Lead <em style="font-style:italic;color:var(--gold)">Hunter</em></div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px">Encontre negócios sem site, sem telefone e sem presença digital — e importe direto para o Kanban.</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:12px;flex-shrink:0">
+        <div style="text-align:center">
+          <div style="font-family:'Cormorant Garamond',serif;font-size:26px;color:var(--gold);line-height:1" id="lh-total-leads">0</div>
+          <div style="font-size:8px;letter-spacing:1.5px;color:var(--muted);font-family:'DM Mono',monospace;text-transform:uppercase;margin-top:2px">leads importados</div>
+        </div>
+        <div style="width:1px;height:36px;background:rgba(201,169,110,0.15)"></div>
+        <a href="./lead-hunter.html" style="text-decoration:none">
+          <button style="
+            background:linear-gradient(135deg,#c9a84c,#8a6520);
+            border:none;border-radius:3px;
+            color:#0a0a08;
+            cursor:pointer;
+            font-family:'DM Mono',monospace;
+            font-size:10px;font-weight:700;
+            letter-spacing:.18em;
+            padding:11px 20px;
+            text-transform:uppercase;
+            white-space:nowrap;
+            transition:opacity .2s;
+            display:flex;align-items:center;gap:7px;
+          " onmouseover="this.style.opacity='.82'" onmouseout="this.style.opacity='1'">
+            ▲ Caçar Leads
+          </button>
+        </a>
+      </div>
+    </div>
+
     <!-- Mini pipeline no dashboard -->
     <div style="margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
       <h2 style="font-family:'Cormorant Garamond',serif;font-size:20px;font-weight:300">Pipeline <em style="font-style:italic;color:var(--gold)">ativo</em></h2>
@@ -1093,6 +1146,12 @@ function renderStats() {
 
   const badge = document.getElementById('pipelineBadge');
   badge.textContent = clients.filter(c => c.status !== 'entregue' && c.status !== 'cancelado').length;
+
+  const lhTotal = document.getElementById('lh-total-leads');
+  if (lhTotal) {
+    const leadsImportados = clients.filter(c => (c.historico||[]).some(h => h.texto && h.texto.includes('Lead Hunter'))).length;
+    lhTotal.textContent = leadsImportados;
+  }
 }
 
 // ══════════════════════════════════════
