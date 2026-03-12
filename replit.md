@@ -1,33 +1,82 @@
-# Vértice CRM
+# Vértice CRM v2.0
 
-## Project Overview
-CRM (Customer Relationship Manager) for Vértice Agência Digital to manage clients, sales pipeline, and financial control.
+## Visão Geral
+CRM completo da Vértice Agência Digital com módulo de Lead Hunting integrado ao PostgreSQL.
 
-- **Technology:** Pure HTML, CSS, and vanilla JavaScript (no frameworks)
-- **Storage:** Browser localStorage
-- **Language:** Portuguese (Brazilian)
+## Tecnologias
+- **Frontend:** HTML, CSS, JavaScript puro (sem frameworks)
+- **Backend:** FastAPI (Python 3.11) — serve estáticos + API REST
+- **Banco de Dados:** PostgreSQL (Replit built-in)
+- **ORM:** SQLAlchemy
+- **Validação:** Pydantic v2
+- **Busca de Leads:** OpenStreetMap / Overpass API (gratuito, sem chave)
 
-## Project Structure
-- `index.html` - Main application file (Dashboard, Pipeline, Clients, Financial views)
-- `lead-hunter.html` - Lead hunting feature page
-
-## Features
-- Dashboard with metrics (monthly revenue, active projects, receivables, total clients)
-- Sales pipeline with statuses: Prospect → Proposal → Closed → Delivered
-- Client registration with package, value, deadline, payment, and notes
-- Financial control with monthly goal (R$ 2,800) and Excel export
-
-## Running the Project
-The app is served as a static site using Python's built-in HTTP server:
+## Estrutura de Arquivos
 ```
-python3 -m http.server 5000 --bind 0.0.0.0
+index.html          — CRM principal (Dashboard, Pipeline Kanban, Clientes, Financeiro)
+lead-hunter.html    — Módulo de Lead Hunting (busca OSM + AI Priority)
+api/
+  main.py           — FastAPI app (endpoints + serve static files)
+  models.py         — SQLAlchemy Lead model (PostgreSQL)
+  schemas.py        — Pydantic schemas com validação
+  search.py         — Engine de busca Overpass + calcAIPriority
+  database.py       — Conexão PostgreSQL via SQLAlchemy
 ```
 
-## Deployment
-Configured as a static deployment with the root directory as the public directory.
+## API Endpoints
+| Método | Rota | Descrição |
+|--------|------|-----------|
+| GET | `/api/health` | Status do servidor |
+| GET | `/api/stats` | Estatísticas dos leads no banco |
+| POST | `/api/leads/hunt` | Busca leads via OSM (termo livre: "Academia em SP") |
+| POST | `/api/leads/import` | Importa leads para PostgreSQL (dedup por osm_id/email/cnpj) |
+| GET | `/api/leads` | Lista leads com filtros (status, segmento, min_priority) |
+| GET | `/api/leads/{id}` | Detalhe de um lead |
+| PUT | `/api/leads/{id}/status` | Atualiza status do lead |
+| DELETE | `/api/leads/{id}` | Remove lead |
 
-## Code Patterns
-- Vanilla JavaScript, no external dependencies
-- Dark visual style with yellow (#f5c518) as accent color
-- Portuguese naming conventions for variables and functions
-- Comments in Portuguese
+## Modelo de Lead (PostgreSQL)
+- `id` — UUID primary key
+- `nome`, `empresa` — identificação
+- `telefone`, `email`, `linkedin` — contato
+- `cnpj` — único (deduplicação)
+- `status` — Novo / Contatado / Qualificado / Proposta / Descartado
+- **`ai_priority`** — 0-10 calculado por nicho + oportunidade digital
+- `segmento` — tipo de negócio
+- `endereco`, `lat`, `lng` — localização
+- `score_vertice` — pontuação de qualificação (0-100)
+- `website`, `osm_id` — dados da fonte
+- `criado_em`, `atualizado_em` — timestamps
+
+## AI Priority (0-10)
+Calculado automaticamente com base no nicho + sinais de oportunidade:
+- **9-10**: Salão de Beleza, Barbearia, Estética (core market da Vértice)
+- **7-8**: Academia, Dentista, Fisioterapia, Psicologia, Spa
+- **5-6**: Restaurante, Padaria, Veterinário, Floricultura
+- **2-4**: Imobiliária, Mecânica, Supermercado
+- Bônus: Sem site (+2pts), Sem telefone (+1pt), Sem horário (+1pt), Score alto (+1pt)
+
+## Workflow
+Rodando FastAPI via uvicorn:
+```
+uvicorn api.main:app --host 0.0.0.0 --port 5000 --reload
+```
+
+## Fluxo Completo
+1. Dashboard → botão "▲ Caçar Leads"
+2. Lead Hunter: configura cidade/raio/segmento → clica "▲ Caçar Leads"
+3. Leads aparecem com Score Vértice e ⚡ AI Priority
+4. Opções de exportação:
+   - "⟶ CRM" → salva no localStorage + entra no Kanban
+   - "💾 DB" → salva no PostgreSQL via API
+   - "⟶ ENVIAR TODOS AO CRM" → todos para localStorage
+   - "💾 SALVAR TODOS NO BANCO" → todos para PostgreSQL
+5. CRM: leads no Kanban com badge "▲ LEAD" e botão WhatsApp rápido
+
+## Configurações de Nicho (Segmentos atendidos)
+Clínica de Estética, Salão de Beleza, Barbearia, Esmalteria,
+Micropigmentação, Designer de Sobrancelhas, Depilação,
+Massoterapia/Spa, Nutrição, Psicologia, Personal Trainer, Outros
+
+## Variáveis de Ambiente
+- `DATABASE_URL` — PostgreSQL connection string (automático via Replit)
