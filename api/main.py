@@ -680,4 +680,4 @@ def lead_hunter():
     raise HTTPException(
         status_code=404,
         detail="lead-hunter.html não encontrado"
-    )
+)
