@@ -1,21 +1,8 @@
 {
-  "version": 2,
-  "builds": [
+  "rewrites": [
     {
-      "src": "api/main.py",
-      "use": "@vercel/python",
-      "config": {
-        "includeFiles": [
-          "index.html",
-          "lead-hunter.html"
-        ]
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "api/main.py"
+      "source": "/api/(.*)",
+      "destination": "/api/main.py"
     }
   ]
 }
